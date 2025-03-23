@@ -1,4 +1,4 @@
-package httpserver
+package handlers
 
 import (
 	"encoding/json"
@@ -8,38 +8,37 @@ import (
 	"opensesame/internal/accesscontrol"
 )
 
-// DoorCommand represents the JSON structure of a door command.
-type DoorCommand struct {
-	DoorID string `json:"door_id"`
-	Action string `json:"action"` // "lock" or "unlock"
+// RegisterDoorRoutes sets up the routes for door commands.
+func RegisterDoorRoutes(mux *http.ServeMux) {
+	// Example: endpoints like /v1/doors/{lock_id}/lock or /v1/doors/{lock_id}/unlock
+	mux.HandleFunc("/v1/doors/", DoorHandler)
 }
 
-// DoorHandler handles REST API requests for door commands.
+// DoorHandler handles requests for door commands.
 func DoorHandler(w http.ResponseWriter, r *http.Request) {
-	// Expect URLs like /doors/{door_id}/unlock or /doors/{door_id}/lock.
+	// Simple parsing: expect URL like /v1/doors/{lock_id}/{action}
 	segments := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if len(segments) < 2 {
+	if len(segments) < 3 {
 		http.Error(w, "Invalid URL", http.StatusBadRequest)
 		return
 	}
-	doorID := segments[1]
+
+	lockID := segments[1]
 	action := segments[2]
 
+	// Build the command and process it.
 	cmd := accesscontrol.Command{
-		DoorID: doorID,
+		DoorID: lockID,
 		Action: action,
 	}
-
-	// In a real application, you would add authentication and authorization here.
-
 	if err := accesscontrol.ProcessCommand(cmd); err != nil {
-		http.Error(w, "Command processing failed", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]string{
 		"status": "success",
-		"door":   doorID,
+		"door":   lockID,
 		"action": action,
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -2,28 +2,47 @@
 package config
 
 import (
+	"context"
 	"os"
 )
 
 // Config holds application configuration.
 type Config struct {
-	Port    string // e.g. ":8080"
-	TLSCert string // path to TLS certificate
-	TLSKey  string // path to TLS key
-	// Add additional fields as needed.
+	HttpListenerPort string
+	ManagementPort   string
+	TcpListenerPort  string
+	TLSCert          string
+	TLSKey           string
 }
 
-// LoadConfig loads configuration from file or environment.
-func LoadConfig(path string) (*Config, error) {
-	// For a simple example, we'll just read from environment variables.
-	// Replace with proper file loading if needed.
+// LoadConfig loads configuration, using context for cancellation if needed.
+func LoadConfig(ctx context.Context, path string) (*Config, error) {
+	// Check for context cancellation (useful if reading from a file/network).
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	cfg := &Config{
-		Port:    os.Getenv("PORT"),
-		TLSCert: os.Getenv("TLS_CERT"),
-		TLSKey:  os.Getenv("TLS_KEY"),
+		HttpListenerPort: os.Getenv("HTTP_PORT"),
+		ManagementPort:   os.Getenv("MGMT_PORT"),
+		TcpListenerPort:  os.Getenv("TCP_PORT"),
+		TLSCert:          os.Getenv("TLS_CERT"),
+		TLSKey:           os.Getenv("TLS_KEY"),
 	}
-	if cfg.Port == "" {
-		cfg.Port = ":8080"
+
+	if cfg.HttpListenerPort == "" {
+		cfg.HttpListenerPort = "8080"
 	}
+
+	if cfg.ManagementPort == "" {
+		cfg.ManagementPort = "8180"
+	}
+
+	if cfg.TcpListenerPort == "" {
+		cfg.TcpListenerPort = "4443"
+	}
+
 	return cfg, nil
 }

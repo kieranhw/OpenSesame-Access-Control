@@ -1,24 +1,33 @@
 package httpserver
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"opensesame/internal/config"
+	"opensesame/internal/httpserver/handlers"
 )
 
-// Start starts the HTTP server.
+// Start initializes and starts the HTTP server.
 func Start(cfg *config.Config) error {
-	// Set up your routes.
 	mux := http.NewServeMux()
-	// Example routes:
-	mux.HandleFunc("/doors/", DoorHandler)
 
-	// For simplicity, we'll run without TLS if TLS config isn't provided.
+	// Register endpoints for different API categories.
+	handlers.RegisterDoorRoutes(mux)
+	handlers.RegisterManagementRoutes(mux)
+
+	// Optional catch-all route for unmatched endpoints.
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Not Found", http.StatusNotFound)
+	})
+
+	// Start HTTPS if TLS config is provided.
 	if cfg.TLSCert != "" && cfg.TLSKey != "" {
-		log.Printf("Starting HTTPS server on %s", cfg.Port)
-		return http.ListenAndServeTLS(cfg.Port, cfg.TLSCert, cfg.TLSKey, mux)
+		log.Printf("Starting HTTPS server on :%s", cfg.HttpListenerPort)
+		return http.ListenAndServeTLS(fmt.Sprintf(":%s", cfg.HttpListenerPort), cfg.TLSCert, cfg.TLSKey, mux)
 	}
-	log.Printf("Starting HTTP server on %s", cfg.Port)
-	return http.ListenAndServe(cfg.Port, mux)
+
+	log.Printf("Starting HTTP server on :%s", cfg.HttpListenerPort)
+	return http.ListenAndServe(fmt.Sprintf(":%s", cfg.HttpListenerPort), mux)
 }

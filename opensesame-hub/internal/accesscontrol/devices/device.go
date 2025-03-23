@@ -1,4 +1,3 @@
-// internal/accesscontrol/devices/device.go
 package devices
 
 // Command represents a generic command to control a device.

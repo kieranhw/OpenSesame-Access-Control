@@ -1,4 +1,3 @@
-// internal/accesscontrol/devices/restapi.go
 package devices
 
 import "fmt"
