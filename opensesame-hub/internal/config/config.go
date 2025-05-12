@@ -1,4 +1,3 @@
-// internal/config/config.go
 package config
 
 import (
@@ -6,7 +5,6 @@ import (
 	"os"
 )
 
-// Config holds application configuration.
 type Config struct {
 	HttpListenerPort string
 	ManagementPort   string
@@ -15,9 +13,7 @@ type Config struct {
 	TLSKey           string
 }
 
-// LoadConfig loads configuration, using context for cancellation if needed.
-func LoadConfig(ctx context.Context, path string) (*Config, error) {
-	// Check for context cancellation (useful if reading from a file/network).
+func LoadConfig(ctx context.Context) (*Config, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -33,11 +29,11 @@ func LoadConfig(ctx context.Context, path string) (*Config, error) {
 	}
 
 	if cfg.HttpListenerPort == "" {
-		cfg.HttpListenerPort = "8080"
+		cfg.HttpListenerPort = "11072"
 	}
 
 	if cfg.ManagementPort == "" {
-		cfg.ManagementPort = "8180"
+		cfg.ManagementPort = "80"
 	}
 
 	if cfg.TcpListenerPort == "" {

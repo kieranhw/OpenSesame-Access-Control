@@ -6,28 +6,19 @@ import (
 	"net/http"
 
 	"opensesame/internal/config"
-	"opensesame/internal/httpserver/handlers"
+	"opensesame/internal/router"
 )
 
-// Start initializes and starts the HTTP server.
 func Start(cfg *config.Config) error {
-	mux := http.NewServeMux()
+	r := router.AddRoutes()
 
-	// Register endpoints for different API categories.
-	handlers.RegisterDoorRoutes(mux)
-	handlers.RegisterManagementRoutes(mux)
+	address := fmt.Sprintf(":%s", cfg.HttpListenerPort)
+	fmt.Printf("Starting server on %s\n", address)
 
-	// Optional catch-all route for unmatched endpoints.
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	})
-
-	// Start HTTPS if TLS config is provided.
-	if cfg.TLSCert != "" && cfg.TLSKey != "" {
-		log.Printf("Starting HTTPS server on :%s", cfg.HttpListenerPort)
-		return http.ListenAndServeTLS(fmt.Sprintf(":%s", cfg.HttpListenerPort), cfg.TLSCert, cfg.TLSKey, mux)
+	// Start the HTTP server
+	if err := http.ListenAndServe(address, r); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+		return err
 	}
-
-	log.Printf("Starting HTTP server on :%s", cfg.HttpListenerPort)
-	return http.ListenAndServe(fmt.Sprintf(":%s", cfg.HttpListenerPort), mux)
+	return nil
 }
