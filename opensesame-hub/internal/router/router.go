@@ -3,14 +3,16 @@ package router
 import (
 	"net/http"
 
-	"opensesame/internal/handler"
+	"opensesame/internal/handlers"
+
+	"github.com/gorilla/mux"
 )
 
-func AddRoutes() *http.ServeMux {
-	mux := http.NewServeMux()
+func AddRoutes() http.Handler {
+	r := mux.NewRouter()
 
-	mux.HandleFunc("/access/validate_pin", handler.ValidatePinHandler)
-	mux.HandleFunc("/pairing/start", handler.StartPairingHandler)
+	r.HandleFunc("/access/{access_id}/validate_pin", handlers.ValidatePinHandler).Methods("POST")
+	r.HandleFunc("/pairing/start", handlers.StartPairingHandler).Methods("POST")
 
-	return mux
+	return r
 }

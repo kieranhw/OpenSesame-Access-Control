@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net/http"
 	"opensesame/internal/config"
-	"opensesame/internal/router"
+	"opensesame/internal/httpserver"
 )
 
 func main() {
@@ -16,13 +14,8 @@ func main() {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
-	// Initialize router and routes
-	r := router.AddRoutes()
-
-	// Start the HTTP server
-	address := fmt.Sprintf(":%s", cfg.HttpListenerPort)
-	fmt.Printf("Starting server on %s\n", address)
-	if err := http.ListenAndServe(address, r); err != nil {
-		log.Fatalf("Error starting server: %v", err)
+	// Delegate server startup (applies logging middleware)
+	if err := httpserver.Start(cfg); err != nil {
+		log.Fatalf("Error starting HTTP server: %v", err)
 	}
 }
