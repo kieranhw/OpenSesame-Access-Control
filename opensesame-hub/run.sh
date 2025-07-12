@@ -10,5 +10,4 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Run the built application
 ./$OUTPUT_BINARY

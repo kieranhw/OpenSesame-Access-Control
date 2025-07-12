@@ -1,0 +1,7 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE IF NOT EXISTS schema_migrations
+(
+  version BIGINT NOT NULL PRIMARY KEY,
+  dirty   BOOLEAN NOT NULL
+);
