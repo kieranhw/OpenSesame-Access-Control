@@ -1,13 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-OUTPUT_BINARY="opensesame-hub" 
-SOURCE_FILE="cmd/opensesame/main.go"
+# 1) Move to the project root (where this script lives)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-go build -o $OUTPUT_BINARY $SOURCE_FILE
+# 2) Build the binary into bin/
+mkdir -p bin
+echo "Building cmd/opensesame → bin/opensesame-hub"
+go build -o bin/opensesame-hub cmd/opensesame/main.go
 
-if [ $? -ne 0 ]; then
-  echo "Build failed! Exiting."
-  exit 1
-fi
+# 3) Copy migrations/ so migrate can find them in bin/
+echo "Copying migrations/ → bin/migrations/"
+rm -rf bin/migrations
+cp -r migrations bin/
 
-./$OUTPUT_BINARY
+# 4) cd into bin/ so our working‐dir is bin/
+pushd bin > /dev/null
+
+# 5) Run the binary (it will create app.db here)
+echo "Starting application from $(pwd)"
+./opensesame-hub
+
+# 6) back out
+popd > /dev/null

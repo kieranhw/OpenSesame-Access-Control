@@ -7,57 +7,65 @@ import (
 	"os"
 	"path/filepath"
 
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+
 	"opensesame/internal/config"
 	"opensesame/internal/httpserver"
-
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"opensesame/internal/model"
+	"opensesame/internal/router"
 )
 
 func main() {
+	// 1) load your existing app config
 	cfg, err := config.LoadConfig(context.Background())
 	if err != nil {
 		log.Fatalf("error loading config: %v", err)
 	}
 
-	dsn := "postgres://opensesame_user:supersecret@localhost:5432/opensesame?sslmode=disable"
-
-	if err := migrateDB(dsn); err != nil {
-		log.Fatalf("database migration failed: %v", err)
-	}
-
-	if err := httpserver.Start(cfg); err != nil {
-		log.Fatalf("error starting HTTP server: %v", err)
-	}
-}
-
-func migrateDB(databaseURL string) error {
-	// figure out absolute path to ./migrations
+	// 2) ensure app.db exists in project root
 	wd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("could not get wd: %w", err)
+		log.Fatalf("could not get working dir: %v", err)
 	}
-	sourcePath := filepath.Join(wd, "migrations")
-	sourceURL := "file://" + sourcePath
+	dbFile := filepath.Join(wd, "app.db")
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		f, err := os.Create(dbFile)
+		if err != nil {
+			log.Fatalf("could not create sqlite file: %v", err)
+		}
+		f.Close()
+	}
 
-	log.Printf("migrate: looking for files in %s", sourcePath)
-	m, err := migrate.New(sourceURL, databaseURL)
+	// 3) open with GORM + SQLite
+	dsn := fmt.Sprintf("%s?_foreign_keys=1", dbFile)
+	gdb, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return fmt.Errorf("migrate.New failed: %w", err)
+		log.Fatalf("failed to open sqlite via GORM: %v", err)
 	}
 
-	log.Println("migrate: running Up()")
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("m.Up failed: %w", err)
+	// 4) auto‐migrate all your models
+	if err := gdb.AutoMigrate(
+		&model.Entry{},
+		&model.ControlClient{},
+		&model.ControlClientEntry{},
+		&model.SystemInfo{},
+	); err != nil {
+		log.Fatalf("AutoMigrate failed: %v", err)
 	}
-	log.Println("migrate: Up() done (or no change)")
+	log.Println("GORM AutoMigrate completed")
 
-	version, dirty, verr := m.Version()
-	if verr != nil && verr != migrate.ErrNilVersion {
-		log.Printf("migrate: Version() failed: %v", verr)
-	} else {
-		log.Printf("migrate: current version=%d, dirty=%v", version, dirty)
+	// 5) extract *sql.DB if your HTTP server expects it, or pass *gorm.DB
+	sqlDB, err := gdb.DB()
+	if err != nil {
+		log.Fatalf("failed to get sql.DB from GORM: %v", err)
 	}
-	return nil
+	defer sqlDB.Close()
+
+	mux := router.AddRoutes(gdb)
+
+	// 6) start your server (update httpserver.Start to accept *gorm.DB or *sql.DB)
+	if err := httpserver.Start(cfg, mux); err != nil {
+		log.Fatalf("error starting HTTP server: %v", err)
+	}
 }

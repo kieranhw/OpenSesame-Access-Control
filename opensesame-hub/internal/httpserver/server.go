@@ -6,20 +6,15 @@ import (
 	"net/http"
 
 	"opensesame/internal/config"
-	"opensesame/internal/middleware" // Import the middleware package
-	"opensesame/internal/router"
+	"opensesame/internal/middleware"
 )
 
-func Start(cfg *config.Config) error {
-	mux := router.AddRoutes()
-	loggedMux := middleware.Logger(mux)
+func Start(cfg *config.Config, handler http.Handler) error {
+	// wrap with your logger middleware
+	logged := middleware.Logger(handler)
 
-	address := fmt.Sprintf(":%s", cfg.HttpListenerPort)
-	fmt.Printf("Starting HTTP server on %s\n", address)
+	addr := fmt.Sprintf(":%s", cfg.HttpListenerPort)
+	log.Printf("starting HTTP server on %s", addr)
 
-	if err := http.ListenAndServe(address, loggedMux); err != nil {
-		log.Fatalf("Error starting server: %v", err)
-		return err
-	}
-	return nil
+	return http.ListenAndServe(addr, logged)
 }
