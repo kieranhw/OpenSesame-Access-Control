@@ -13,17 +13,15 @@ import (
 	"opensesame/internal/config"
 	"opensesame/internal/httpserver"
 	"opensesame/internal/model"
-	"opensesame/internal/router"
 )
 
 func main() {
-	// 1) load your existing app config
 	cfg, err := config.LoadConfig(context.Background())
 	if err != nil {
 		log.Fatalf("error loading config: %v", err)
 	}
 
-	// 2) ensure app.db exists in project root
+	// find the sqlite app.db
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("could not get working dir: %v", err)
@@ -37,34 +35,25 @@ func main() {
 		f.Close()
 	}
 
-	// 3) open with GORM + SQLite
 	dsn := fmt.Sprintf("%s?_foreign_keys=1", dbFile)
 	gdb, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to open sqlite via GORM: %v", err)
 	}
 
-	// 4) auto‐migrate all your models
+	// migrate models on startup
 	if err := gdb.AutoMigrate(
 		&model.Entry{},
 		&model.ControlClient{},
 		&model.ControlClientEntry{},
-		&model.SystemInfo{},
+		&model.SystemConfig{},
 	); err != nil {
 		log.Fatalf("AutoMigrate failed: %v", err)
 	}
-	log.Println("GORM AutoMigrate completed")
+	log.Println("AutoMigrate completed")
 
-	// 5) extract *sql.DB if your HTTP server expects it, or pass *gorm.DB
-	sqlDB, err := gdb.DB()
-	if err != nil {
-		log.Fatalf("failed to get sql.DB from GORM: %v", err)
-	}
-	defer sqlDB.Close()
-
-	mux := router.AddRoutes(gdb)
-
-	// 6) start your server (update httpserver.Start to accept *gorm.DB or *sql.DB)
+	// create http server
+	mux := httpserver.AddHttpRoutes(gdb)
 	if err := httpserver.Start(cfg, mux); err != nil {
 		log.Fatalf("error starting HTTP server: %v", err)
 	}

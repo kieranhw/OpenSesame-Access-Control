@@ -7,11 +7,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func MountRoutes(parent *mux.Router, setupSvc *service.SetupService) {
+func MountRoutes(parent *mux.Router, setupSvc *service.ConfigService) {
 	mgmt := parent.PathPrefix("/management").Subrouter()
 	mgmt.Use(middleware.MgmtAuthValidator())
 
-	mgmt.HandleFunc("/setup", SystemSetupHandler(setupSvc)).Methods("GET", "POST")
+	mgmt.HandleFunc("/config", GetSystemConfig(setupSvc)).Methods("GET")
+	mgmt.HandleFunc("/config", PostSystemConfig(setupSvc)).Methods("POST")
 	mgmt.HandleFunc("/access", GetAccessHandler).Methods("GET")
 	mgmt.HandleFunc("/access", PostAccessHandler).Methods("POST")
 }

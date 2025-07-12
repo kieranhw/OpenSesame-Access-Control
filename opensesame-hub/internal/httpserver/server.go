@@ -6,15 +6,28 @@ import (
 	"net/http"
 
 	"opensesame/internal/config"
+	"opensesame/internal/handlers/management"
 	"opensesame/internal/middleware"
+	"opensesame/internal/service"
+
+	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 func Start(cfg *config.Config, handler http.Handler) error {
-	// wrap with your logger middleware
-	logged := middleware.Logger(handler)
-
 	addr := fmt.Sprintf(":%s", cfg.HttpListenerPort)
 	log.Printf("starting HTTP server on %s", addr)
+	return http.ListenAndServe(addr, handler)
+}
 
-	return http.ListenAndServe(addr, logged)
+func AddHttpRoutes(db *gorm.DB) http.Handler {
+	r := mux.NewRouter()
+	r.Use(middleware.HttpLogger)
+	r.Use(middleware.ValidateJSONBody)
+
+	setupSvc := service.NewConfigService(db)
+
+	management.MountRoutes(r, setupSvc)
+
+	return r
 }
