@@ -38,3 +38,9 @@ type SystemConfig struct {
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }
+
+type Session struct {
+	Token     string    `gorm:"primaryKey;size:36"` // UUID v4
+	ExpiresAt time.Time `gorm:"not null;index"`
+	CreatedAt time.Time
+}

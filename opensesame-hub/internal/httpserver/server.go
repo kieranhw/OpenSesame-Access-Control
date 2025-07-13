@@ -25,9 +25,10 @@ func AddHttpRoutes(db *gorm.DB) http.Handler {
 	r.Use(middleware.HttpLogger)
 	r.Use(middleware.ValidateJSONBody)
 
-	setupSvc := service.NewConfigService(db)
+	configSvc := service.NewConfigService(db)
+	authSvc := service.NewAuthService(db)
 
-	management.MountRoutes(r, setupSvc)
+	management.MountRoutes(r, configSvc, authSvc)
 
 	return r
 }
