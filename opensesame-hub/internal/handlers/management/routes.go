@@ -13,6 +13,8 @@ func MountRoutes(parent *mux.Router, setupSvc *service.ConfigService) {
 
 	mgmt.HandleFunc("/config", GetSystemConfig(setupSvc)).Methods("GET")
 	mgmt.HandleFunc("/config", PostSystemConfig(setupSvc)).Methods("POST")
+	mgmt.HandleFunc("/config", PatchSystemConfig(setupSvc)).Methods("PATCH")
+
 	mgmt.HandleFunc("/access", GetAccessHandler).Methods("GET")
 	mgmt.HandleFunc("/access", PostAccessHandler).Methods("POST")
 }

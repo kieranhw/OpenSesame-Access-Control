@@ -41,7 +41,7 @@ func main() {
 		log.Fatalf("failed to open sqlite via GORM: %v", err)
 	}
 
-	// migrate models on startup
+	// auto migrate models on startup
 	if err := gdb.AutoMigrate(
 		&model.Entry{},
 		&model.ControlClient{},

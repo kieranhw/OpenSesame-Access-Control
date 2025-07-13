@@ -33,7 +33,7 @@ type SystemConfig struct {
 	ID                int    `gorm:"primaryKey;autoIncrement"`
 	SystemName        string `gorm:"not null"`
 	AdminPasswordHash string `gorm:"not null"`
-	BackupCodeHash    string
+	BackupCode        string `gorm:"not null"`
 	SystemSecret      string `gorm:"not null"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time

@@ -24,6 +24,37 @@ func (s *ConfigService) IsSystemConfigured(ctx context.Context) (bool, error) {
 	return rows > 0, nil
 }
 
-func (s *ConfigService) Create(ctx context.Context, si *model.SystemConfig) error {
-	return s.db.WithContext(ctx).Create(si).Error
+func (s *ConfigService) GetSystemConfig(ctx context.Context) (*model.SystemConfig, error) {
+	var config model.SystemConfig
+	if err := s.db.WithContext(ctx).First(&config).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &config, nil
+}
+
+func (s *ConfigService) CreateConfig(ctx context.Context, cfg *model.SystemConfig) error {
+	configured, err := s.IsSystemConfigured(ctx)
+	if err != nil {
+		return err
+	}
+	if configured {
+		return ErrAlreadyConfigured
+	}
+
+	return s.db.WithContext(ctx).Create(cfg).Error
+}
+
+func (s *ConfigService) UpdateConfig(ctx context.Context, cfg *model.SystemConfig) error {
+	configured, err := s.IsSystemConfigured(ctx)
+	if err != nil {
+		return err
+	}
+	if !configured {
+		return ErrNotConfigured
+	}
+
+	return s.db.WithContext(ctx).Save(cfg).Error
 }
