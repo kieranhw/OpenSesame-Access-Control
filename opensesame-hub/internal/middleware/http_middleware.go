@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-// StatusRecorder wraps http.ResponseWriter to record the status code.
 type StatusRecorder struct {
 	http.ResponseWriter
 	StatusCode int
@@ -17,7 +16,6 @@ func (rec *StatusRecorder) WriteHeader(statusCode int) {
 	rec.ResponseWriter.WriteHeader(statusCode)
 }
 
-// HttpLogger logs each request and its response status code.
 func HttpLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rec := &StatusRecorder{ResponseWriter: w, StatusCode: http.StatusOK}
@@ -31,7 +29,6 @@ func ValidateJSONBody(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost, http.MethodPut, http.MethodPatch:
-			// Check Content-Type
 			ct := r.Header.Get("Content-Type")
 			if !strings.HasPrefix(ct, "application/json") {
 				http.Error(
@@ -42,11 +39,10 @@ func ValidateJSONBody(next http.Handler) http.Handler {
 				return
 			}
 
-			// Check non-empty body
 			if r.ContentLength == 0 {
 				http.Error(
 					w,
-					"request body is required",
+					"Request body is required",
 					http.StatusBadRequest,
 				)
 				return

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { LoginForm } from "@/components/login-form";
 import { api } from "@/lib/api";
+import { LOGIN_URL } from "@/lib/constants";
 
 interface LoginResponse {
   success: boolean;
@@ -18,15 +19,14 @@ export default function LoginPage() {
   const handleLogin = async (password: string) => {
     setError(undefined);
     setLoading(true);
+
     try {
-      // POST to http://localhost:11072/management/login
-      const { data } = await api.post<LoginResponse>("/management/login", {
+      const { data } = await api.post<LoginResponse>(LOGIN_URL, {
         password,
       });
       console.log("Login succeeded", data);
-      // the browser has now stored os_session
       router.push("/");
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Login error", err);
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.error || err.message || "Login failed");
