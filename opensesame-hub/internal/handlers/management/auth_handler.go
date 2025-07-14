@@ -23,11 +23,7 @@ type SessionResponse struct {
 	Authenticated bool `json:"authenticated"`
 }
 
-// LoginHandler issues an os_session JWT cookie on successful login.
-func LoginHandler(
-	configSvc *service.ConfigService,
-	authSvc *service.AuthService, // not used here but kept for parity
-) http.HandlerFunc {
+func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -52,14 +48,13 @@ func LoginHandler(
 			return
 		}
 
-		// Load config to get the password hash & secret
 		cfg, err := configSvc.GetSystemConfig(r.Context())
 		if err != nil {
 			http.Error(w, "server error", http.StatusInternalServerError)
 			return
 		}
 
-		// Verify password
+		// validate password
 		if err := bcrypt.CompareHashAndPassword(
 			[]byte(cfg.AdminPasswordHash),
 			[]byte(req.Password),
@@ -68,7 +63,7 @@ func LoginHandler(
 			return
 		}
 
-		// Create JWT
+		// create jwt signed with system secret
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"exp": time.Now().Add(24 * time.Hour).Unix(),
 			"iat": time.Now().Unix(),
@@ -80,7 +75,6 @@ func LoginHandler(
 			return
 		}
 
-		// Set the cookie (host-only, HttpOnly)
 		http.SetCookie(w, &http.Cookie{
 			Name:     "os_session",
 			Value:    signed,
@@ -94,19 +88,17 @@ func LoginHandler(
 	}
 }
 
-// SessionHandler lets the client verify they have a valid os_session.
 func SessionHandler(configSvc *service.ConfigService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		// 1) grab the cookie
 		c, err := r.Cookie("os_session")
 		if err != nil {
 			http.Error(w, "no session cookie", http.StatusUnauthorized)
 			return
 		}
 
-		// 2) load system secret
+		// get system secret
 		cfg, err := configSvc.GetSystemConfig(r.Context())
 		if err != nil {
 			http.Error(w, "server error", http.StatusInternalServerError)
@@ -117,7 +109,7 @@ func SessionHandler(configSvc *service.ConfigService) http.HandlerFunc {
 			return
 		}
 
-		// 3) parse & validate JWT
+		// validate jwt
 		token, err := jwt.ParseWithClaims(
 			c.Value,
 			&jwt.RegisteredClaims{},
@@ -130,7 +122,6 @@ func SessionHandler(configSvc *service.ConfigService) http.HandlerFunc {
 			return
 		}
 
-		// 4) success
 		json.NewEncoder(w).Encode(SessionResponse{Authenticated: true})
 	}
 }
