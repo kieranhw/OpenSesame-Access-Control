@@ -86,8 +86,7 @@ func LoginHandler(
 			Value:    signed,
 			Path:     "/",
 			HttpOnly: true,
-			Secure:   false, // TODO: enable when TLS is on
-			SameSite: http.SameSiteStrictMode,
+			Secure:   false,
 			Expires:  time.Now().Add(24 * time.Hour),
 		})
 

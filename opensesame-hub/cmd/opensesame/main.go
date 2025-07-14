@@ -47,6 +47,7 @@ func main() {
 		&model.ControlClient{},
 		&model.ControlClientEntry{},
 		&model.SystemConfig{},
+		&model.Session{},
 	); err != nil {
 		log.Fatalf("AutoMigrate failed: %v", err)
 	}

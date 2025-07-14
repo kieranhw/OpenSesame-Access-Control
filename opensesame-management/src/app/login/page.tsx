@@ -1,7 +1,14 @@
+// app/login/page.tsx
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import { LoginForm } from "@/components/login-form";
+import { api } from "@/lib/api";
+
+interface LoginResponse {
+  success: boolean;
+}
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -12,26 +19,20 @@ export default function LoginPage() {
     setError(undefined);
     setLoading(true);
     try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+      // POST to http://localhost:11072/management/login
+      const { data } = await api.post<LoginResponse>("/management/login", {
+        password,
       });
-
-      console.log("Login response:", res);
-      if (!res.ok) {
-        const text = await res.text();
-        // TODO: read the error message and set it
-        console.log("Login failed:", text);
-        throw new Error(text || res.statusText);
-      }
-      // redirect on success
-      //
+      console.log("Login succeeded", data);
+      // the browser has now stored os_session
       router.push("/");
-    } catch {
-      // TODO: handle specific error cases
-      console.log("Error");
+    } catch (err: unknown) {
+      console.error("Login error", err);
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.error || err.message || "Login failed");
+      } else {
+        setError("Login failed");
+      }
     } finally {
       setLoading(false);
     }
