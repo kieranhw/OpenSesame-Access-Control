@@ -23,6 +23,10 @@ type SessionResponse struct {
 	Authenticated bool `json:"authenticated"`
 }
 
+type LogoutResponse struct {
+	Success bool `json:"success"`
+}
+
 func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -123,5 +127,27 @@ func SessionHandler(configSvc *service.ConfigService) http.HandlerFunc {
 		}
 
 		json.NewEncoder(w).Encode(SessionResponse{Authenticated: true})
+	}
+}
+
+func LogoutHandler(authSvc *service.AuthService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if c, err := r.Cookie("os_session"); err == nil {
+			_ = authSvc.DeleteSession(r.Context(), c.Value)
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "os_session",
+			Value:    "",
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   false,
+			Expires:  time.Unix(0, 0),
+			MaxAge:   -1,
+		})
+
+		json.NewEncoder(w).Encode(LogoutResponse{
+			Success: true,
+		})
 	}
 }

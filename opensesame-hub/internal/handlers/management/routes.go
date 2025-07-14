@@ -24,8 +24,10 @@ func MountRoutes(
 	// public routes
 	parent.HandleFunc("/management/config", GetSystemConfig(configSvc)).Methods("GET")
 	parent.HandleFunc("/management/config", PostSystemConfig(configSvc)).Methods("POST")
-	parent.HandleFunc("/management/login", LoginHandler(configSvc, authSvc)).Methods("POST")
-	parent.HandleFunc("/management/validate_session", SessionHandler(configSvc)).Methods("GET")
+
+	parent.HandleFunc("/management/session", LoginHandler(configSvc, authSvc)).Methods("POST")
+	parent.HandleFunc("/management/session", SessionHandler(configSvc)).Methods("GET")
+	parent.HandleFunc("/management/session", LogoutHandler(authSvc)).Methods("DELETE")
 
 	// protected routes
 	mgmt := parent.PathPrefix("/management").Subrouter()

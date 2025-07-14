@@ -47,6 +47,5 @@ func (a *AuthService) ValidateSession(ctx context.Context, token string) (bool, 
 }
 
 func (a *AuthService) DeleteSession(ctx context.Context, token string) error {
-	return a.db.WithContext(ctx).
-		Delete(&model.Session{}, "token = ?", token).Error
+	return a.db.WithContext(ctx).Delete(&model.Session{}, "token = ?", token).Error
 }
