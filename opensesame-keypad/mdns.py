@@ -4,8 +4,8 @@ import mdns
 
 wifi.radio.enabled = True
 
-SSID = "RSR83"
-PASSWORD = "pBFD8Qya"
+SSID = "ExampleSSID"
+PASSWORD = "examplepassword"
 
 print("Connecting to Wi‑Fi...")
 try:
