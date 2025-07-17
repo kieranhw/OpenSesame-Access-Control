@@ -30,14 +30,13 @@ export function LoginForm({
   const [password, setPassword] = useState("");
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
-    console.log("On Submit fired")
     e.preventDefault();
     onSubmit(password);
   };
 
   return (
     <div className={cn("flex max-w-96 flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="space-y-8 py-8">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 w-fit rounded-full bg-zinc-800 p-3">
             <Lock className="h-6 w-6 text-zinc-300" />
@@ -48,8 +47,8 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-6">
-            <div className="grid gap-3">
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="grid gap-2">
               <Label htmlFor="password">Admin Password</Label>
               <Input
                 id="password"
@@ -60,7 +59,12 @@ export function LoginForm({
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full"
+              variant={"secondary"}
+              disabled={loading}
+            >
               {loading ? "Logging in…" : "Login"}
             </Button>
           </form>

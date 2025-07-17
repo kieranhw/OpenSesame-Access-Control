@@ -1,4 +1,3 @@
-// app/login/page.tsx
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,6 +5,7 @@ import axios from "axios";
 import { LoginForm } from "@/components/login-form";
 import { api } from "@/lib/api";
 import { LOGIN_URL } from "@/lib/constants";
+import packageJson from "../../../package.json";
 
 interface LoginResponse {
   success: boolean;
@@ -24,8 +24,11 @@ export default function LoginPage() {
       const { data } = await api.post<LoginResponse>(LOGIN_URL, {
         password,
       });
-      console.log("Login succeeded", data);
-      router.push("/");
+
+      if (data.success) {
+        router.push("/");
+      } else {
+      }
     } catch (err) {
       console.error("Login error", err);
       if (axios.isAxiosError(err)) {
@@ -39,10 +42,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-muted flex h-full flex-col items-center justify-center overflow-scroll">
-      <div className="flex w-full max-w-96 flex-col gap-6">
+    <div className="bg-muted flex h-full flex-col items-center justify-between overflow-scroll dark:bg-gradient-to-br dark:from-zinc-950 dark:via-black dark:to-zinc-900">
+      <div />
+      <div className="flex w-full max-w-96 flex-col gap-6 my-8">
         <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
       </div>
+      <footer className="border-divider bg-card w-full flex-none border-t px-4 py-2">
+        <div className="flex h-8 items-center justify-center">
+          <p className="text-muted-foreground text-sm">
+            OpenSesame Management Version {packageJson.version}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
