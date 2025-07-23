@@ -12,7 +12,7 @@ import (
 
 	"opensesame/internal/config"
 	"opensesame/internal/httpserver"
-	"opensesame/internal/model"
+	"opensesame/internal/models/db"
 )
 
 func main() {
@@ -43,11 +43,11 @@ func main() {
 
 	// auto migrate models on startup
 	if err := gdb.AutoMigrate(
-		&model.Entry{},
-		&model.ControlClient{},
-		&model.ControlClientEntry{},
-		&model.SystemConfig{},
-		&model.Session{},
+		&db.Entry{},
+		&db.ControlClient{},
+		&db.ControlClientEntry{},
+		&db.SystemConfig{},
+		&db.Session{},
 	); err != nil {
 		log.Fatalf("AutoMigrate failed: %v", err)
 	}

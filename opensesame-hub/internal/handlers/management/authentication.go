@@ -15,12 +15,10 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-type LoginResponse struct {
-	Success bool `json:"success"`
-}
-
 type SessionResponse struct {
-	Authenticated bool `json:"authenticated"`
+	Message       *string `json:"message,omitempty"`
+	Authenticated bool    `json:"authenticated"`
+	Configured    bool    `json:"configured"`
 }
 
 type LogoutResponse struct {
@@ -30,31 +28,39 @@ type LogoutResponse struct {
 func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			msg := "method not allowed"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    true,
+			})
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-			return
-		}
-
-		// Ensure system is configured
-		configured, err := configSvc.IsSystemConfigured(r.Context())
-		if err != nil {
-			http.Error(w, "server error", http.StatusInternalServerError)
-			return
-		}
-		if !configured {
-			http.Error(w, "system not configured", http.StatusPreconditionFailed)
+			w.WriteHeader(http.StatusBadRequest)
+			msg := "invalid JSON payload"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    true,
+			})
 			return
 		}
 
 		cfg, err := configSvc.GetSystemConfig(r.Context())
-		if err != nil {
-			http.Error(w, "server error", http.StatusInternalServerError)
+		if err != nil || cfg == nil {
+			w.WriteHeader(http.StatusPreconditionRequired)
+			msg := "system configuration required"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    false,
+			})
 			return
 		}
 
@@ -63,19 +69,32 @@ func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService
 			[]byte(cfg.AdminPasswordHash),
 			[]byte(req.Password),
 		); err != nil {
-			http.Error(w, "invalid credentials", http.StatusUnauthorized)
+			w.WriteHeader(http.StatusUnauthorized)
+			msg := "invalid credentials"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    true,
+			})
 			return
 		}
 
-		// create jwt signed with system secret
+		// create jwt signed with the system secret
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"exp": time.Now().Add(24 * time.Hour).Unix(),
 			"iat": time.Now().Unix(),
 			"sub": "admin",
 		})
+
 		signed, err := token.SignedString([]byte(cfg.SystemSecret))
 		if err != nil {
-			http.Error(w, "could not sign token", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
+			msg := "could not sign token"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    true,
+			})
 			return
 		}
 
@@ -88,53 +107,74 @@ func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService
 			Expires:  time.Now().Add(24 * time.Hour),
 		})
 
-		json.NewEncoder(w).Encode(LoginResponse{Success: true})
+		json.NewEncoder(w).Encode(SessionResponse{
+			Authenticated: true,
+			Configured:    true,
+		})
 	}
 }
 
-func SessionHandler(configSvc *service.ConfigService) http.HandlerFunc {
+func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		c, err := r.Cookie("os_session")
 		if err != nil {
-			http.Error(w, "no session cookie", http.StatusUnauthorized)
+			w.WriteHeader(http.StatusUnauthorized)
+			msg := "login required"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    true,
+			})
 			return
 		}
 
-		// get system secret
 		cfg, err := configSvc.GetSystemConfig(r.Context())
+		if err != nil || cfg == nil {
+			w.WriteHeader(http.StatusPreconditionRequired)
+			msg := "system configuration required"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    false,
+			})
+			return
+		}
+		systemSecret := cfg.SystemSecret
+
+		isValid, err := authSvc.ValidateSession(r.Context(), c.Value, systemSecret)
 		if err != nil {
-			http.Error(w, "server error", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusUnauthorized)
+			msg := "session validation error"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    true,
+			})
 			return
 		}
-		if cfg == nil {
-			http.Error(w, "system not configured", http.StatusPreconditionFailed)
+		if !isValid {
+			w.WriteHeader(http.StatusUnauthorized)
+			msg := "invalid or expired session"
+			json.NewEncoder(w).Encode(SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    true,
+			})
 			return
 		}
 
-		// validate jwt
-		token, err := jwt.ParseWithClaims(
-			c.Value,
-			&jwt.RegisteredClaims{},
-			func(t *jwt.Token) (interface{}, error) {
-				return []byte(cfg.SystemSecret), nil
-			},
-		)
-		if err != nil || !token.Valid {
-			http.Error(w, "invalid or expired session", http.StatusUnauthorized)
-			return
-		}
-
-		json.NewEncoder(w).Encode(SessionResponse{Authenticated: true})
+		json.NewEncoder(w).Encode(SessionResponse{
+			Authenticated: true,
+			Configured:    true,
+		})
 	}
 }
 
-func LogoutHandler(authSvc *service.AuthService) http.HandlerFunc {
+func LogoutHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if c, err := r.Cookie("os_session"); err == nil {
-			_ = authSvc.DeleteSession(r.Context(), c.Value)
-		}
+		w.Header().Set("Content-Type", "application/json")
 
 		http.SetCookie(w, &http.Cookie{
 			Name:     "os_session",
@@ -146,8 +186,6 @@ func LogoutHandler(authSvc *service.AuthService) http.HandlerFunc {
 			MaxAge:   -1,
 		})
 
-		json.NewEncoder(w).Encode(LogoutResponse{
-			Success: true,
-		})
+		json.NewEncoder(w).Encode(LogoutResponse{Success: true})
 	}
 }

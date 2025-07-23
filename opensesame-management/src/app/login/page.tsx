@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { LoginForm } from "@/components/login-form";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api/api";
 import { LOGIN_URL } from "@/lib/constants";
 import packageJson from "../../../package.json";
 

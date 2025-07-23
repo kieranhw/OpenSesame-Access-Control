@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VALIDATE_URL } from "./lib/constants";
-import { getConfig } from "./lib/api";
+import { ApiRoute, getConfig } from "./lib/api/api";
+import { AppRoute } from "./lib/routes";
 
 // TODO: This needs some careful thought for the potential flow cases
 // then some refactoring - will come back to it when decided how this
@@ -9,17 +9,13 @@ import { getConfig } from "./lib/api";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  if (
-    pathname.startsWith("/_next/") ||
-    pathname.startsWith("/static/") ||
-    pathname === "/favicon.ico" ||
-    pathname.includes(".")
-  ) {
-    // skip internal, static, and paths with file extensions
-    return NextResponse.next();
+  if (await skipInternalPaths(req)) return NextResponse.next();
+
+  if (await checkSystemConfigured(req)) {
+    
   }
 
-  if (pathname.includes("/setup")) {
+  if (pathname.includes(AppRoute.SETUP)) {
     // if we're on setup and configured direct to login
     try {
       const cfgRes = await getConfig();
@@ -74,7 +70,7 @@ export async function middleware(req: NextRequest) {
   // validate the session token with the hub
   const rawCookieHeader: string = req.headers.get("cookie") ?? "";
   try {
-    const apiRes = await fetch(VALIDATE_URL, {
+    const apiRes = await fetch(ApiRoute.SESSION, {
       method: "GET",
       headers: {
         // send all cookies
@@ -124,7 +120,21 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// Run on all paths
+async function skipInternalPaths(req: NextRequest): Promise<boolean> {
+  const { pathname } = req.nextUrl;
+  if (
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/static/") ||
+    pathname === "/favicon.ico" ||
+    pathname.includes(".")
+  ) {
+    // skip internal, static, and paths with file extensions
+    return true;
+  }
+
+  return false;
+}
+
 export const config = {
   matcher: ["/:path*"],
 };

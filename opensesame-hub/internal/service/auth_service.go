@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
-	"opensesame/internal/model"
+	"opensesame/internal/models/db"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -18,9 +20,9 @@ func NewAuthService(db *gorm.DB) *AuthService {
 	return &AuthService{db: db}
 }
 
-func (a *AuthService) CreateSession(ctx context.Context) (*model.Session, error) {
+func (a *AuthService) CreateSession(ctx context.Context) (*db.Session, error) {
 	token := uuid.NewString()
-	sess := &model.Session{
+	sess := &db.Session{
 		Token:     token,
 		ExpiresAt: time.Now().Add(24 * time.Hour),
 	}
@@ -30,22 +32,38 @@ func (a *AuthService) CreateSession(ctx context.Context) (*model.Session, error)
 	return sess, nil
 }
 
-func (a *AuthService) ValidateSession(ctx context.Context, token string) (bool, error) {
-	var sess model.Session
-	err := a.db.WithContext(ctx).
-		First(&sess, "token = ?", token).Error
+func (s *AuthService) ValidateSession(ctx context.Context, tokenString string, systemSecret string) (bool, error) {
+	return s.validateJWT(tokenString, systemSecret)
+}
+
+func (s *AuthService) validateJWT(tokenString string, systemSecret string) (bool, error) {
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&jwt.RegisteredClaims{},
+		func(t *jwt.Token) (interface{}, error) {
+			// ensure the signing method is HMAC
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, errors.New("unexpected signing method")
+			}
+			return []byte(systemSecret), nil
+		},
+	)
+
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		// return false instead of error if token is expired
+		if errors.Is(err, jwt.ErrTokenExpired) {
 			return false, nil
 		}
 		return false, err
 	}
-	if time.Now().After(sess.ExpiresAt) {
+
+	if !token.Valid {
 		return false, nil
 	}
+
 	return true, nil
 }
 
 func (a *AuthService) DeleteSession(ctx context.Context, token string) error {
-	return a.db.WithContext(ctx).Delete(&model.Session{}, "token = ?", token).Error
+	return a.db.WithContext(ctx).Delete(&db.Session{}, "token = ?", token).Error
 }

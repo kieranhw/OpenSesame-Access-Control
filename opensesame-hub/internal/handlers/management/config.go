@@ -2,31 +2,17 @@ package management
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"opensesame/internal/models/db"
+	"opensesame/internal/models/dto"
+	"opensesame/internal/service"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-
-	"opensesame/internal/model"
-	"opensesame/internal/service"
 )
 
-type CreateConfigRequest struct {
-	SystemName    string `json:"system_name"`
-	AdminPassword string `json:"admin_password"`
-}
-
-type UpdateConfigRequest struct {
-	SystemName    *string `json:"system_name,omitempty"`
-	AdminPassword *string `json:"admin_password,omitempty"`
-}
-
-type ConfigResponse struct {
-	Configured bool    `json:"configured"`
-	SystemName *string `json:"system_name,omitempty"`
-	BackupCode *string `json:"backup_code,omitempty"`
-}
-
+// GetSystemConfigHandler returns the current system configuration.
 func GetSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -37,9 +23,7 @@ func GetSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 			return
 		}
 		if !configured {
-			json.NewEncoder(w).Encode(ConfigResponse{
-				Configured: false,
-			})
+			json.NewEncoder(w).Encode(dto.ConfigResponse{Configured: false})
 			return
 		}
 
@@ -49,13 +33,14 @@ func GetSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(ConfigResponse{
+		json.NewEncoder(w).Encode(dto.ConfigResponse{
 			Configured: true,
 			SystemName: &cfg.SystemName,
 		})
 	}
 }
 
+// PostSystemConfigHandler handles the initial creation of system configuration.
 func PostSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -65,32 +50,29 @@ func PostSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		if isConfigured {
 			http.Error(w, "System already configured", http.StatusConflict)
 			return
 		}
 
-		var req CreateConfigRequest
+		var req dto.CreateConfigPayload
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// hash the password (TODO: swap for real bcrypt cost)
 		pwdHash, err := bcrypt.GenerateFromPassword(
 			[]byte(req.AdminPassword), bcrypt.DefaultCost,
 		)
 		if err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
+			http.Error(w, "internal error during password hashing", http.StatusInternalServerError)
 			return
 		}
 
-		// generate a system secret
-		secret := uuid.New().String()
-		backupCode := uuid.New().String()
+		secret := uuid.NewString()
+		backupCode := uuid.NewString()
 
-		entity := &model.SystemConfig{
+		entity := &db.SystemConfig{
 			SystemName:        req.SystemName,
 			AdminPasswordHash: string(pwdHash),
 			SystemSecret:      secret,
@@ -103,7 +85,7 @@ func PostSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(ConfigResponse{
+		json.NewEncoder(w).Encode(dto.ConfigResponse{
 			Configured: true,
 			SystemName: &entity.SystemName,
 			BackupCode: &entity.BackupCode,
@@ -115,54 +97,30 @@ func PatchSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		ok, err := svc.IsSystemConfigured(r.Context())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if !ok {
-			http.Error(w, "system not configured", http.StatusPreconditionFailed)
-			return
-		}
-
-		var req UpdateConfigRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		var reqPayload dto.UpdateConfigPayload
+		if err := json.NewDecoder(r.Body).Decode(&reqPayload); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if req.SystemName == nil && req.AdminPassword == nil {
-			http.Error(w, "nothing to update", http.StatusBadRequest)
-			return
-		}
-
-		cfg, err := svc.GetSystemConfig(r.Context())
+		updatedCfg, err := svc.UpdateConfig(r.Context(), &reqPayload)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if req.SystemName != nil {
-			cfg.SystemName = *req.SystemName
-		}
-
-		if req.AdminPassword != nil {
-			hash, err := bcrypt.GenerateFromPassword([]byte(*req.AdminPassword), bcrypt.DefaultCost)
-			if err != nil {
+			switch {
+			case errors.Is(err, service.ErrNotConfigured):
+				http.Error(w, "system not configured", http.StatusPreconditionFailed)
+			case errors.Is(err, service.ErrNoUpdateFields):
+				http.Error(w, "nothing to update", http.StatusBadRequest)
+			case errors.Is(err, service.ErrPasswordHashingFailed):
 				http.Error(w, "error hashing password", http.StatusInternalServerError)
-				return
+			default:
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-			cfg.AdminPasswordHash = string(hash)
-		}
-
-		if err := svc.UpdateConfig(r.Context(), cfg); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		json.NewEncoder(w).Encode(ConfigResponse{
+		json.NewEncoder(w).Encode(dto.ConfigResponse{
 			Configured: true,
-			SystemName: &cfg.SystemName,
+			SystemName: &updatedCfg.SystemName,
 		})
 	}
 }
