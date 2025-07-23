@@ -8,22 +8,9 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 
+	"opensesame/internal/models/dto"
 	"opensesame/internal/service"
 )
-
-type LoginRequest struct {
-	Password string `json:"password"`
-}
-
-type SessionResponse struct {
-	Message       *string `json:"message,omitempty"`
-	Authenticated bool    `json:"authenticated"`
-	Configured    bool    `json:"configured"`
-}
-
-type LogoutResponse struct {
-	Success bool `json:"success"`
-}
 
 func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -31,23 +18,23 @@ func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			msg := "method not allowed"
-			json.NewEncoder(w).Encode(SessionResponse{
+			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,
-				Configured:    true,
+				Configured:    false,
 			})
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 
-		var req LoginRequest
+		var req dto.LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			msg := "invalid JSON payload"
-			json.NewEncoder(w).Encode(SessionResponse{
+			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,
-				Configured:    true,
+				Configured:    false,
 			})
 			return
 		}
@@ -56,7 +43,7 @@ func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService
 		if err != nil || cfg == nil {
 			w.WriteHeader(http.StatusPreconditionRequired)
 			msg := "system configuration required"
-			json.NewEncoder(w).Encode(SessionResponse{
+			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,
 				Configured:    false,
@@ -71,7 +58,7 @@ func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService
 		); err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			msg := "invalid credentials"
-			json.NewEncoder(w).Encode(SessionResponse{
+			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,
 				Configured:    true,
@@ -90,7 +77,7 @@ func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			msg := "could not sign token"
-			json.NewEncoder(w).Encode(SessionResponse{
+			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,
 				Configured:    true,
@@ -107,7 +94,7 @@ func LoginHandler(configSvc *service.ConfigService, authSvc *service.AuthService
 			Expires:  time.Now().Add(24 * time.Hour),
 		})
 
-		json.NewEncoder(w).Encode(SessionResponse{
+		json.NewEncoder(w).Encode(dto.SessionResponse{
 			Authenticated: true,
 			Configured:    true,
 		})
@@ -118,23 +105,11 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		c, err := r.Cookie("os_session")
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			msg := "login required"
-			json.NewEncoder(w).Encode(SessionResponse{
-				Message:       &msg,
-				Authenticated: false,
-				Configured:    true,
-			})
-			return
-		}
-
 		cfg, err := configSvc.GetSystemConfig(r.Context())
 		if err != nil || cfg == nil {
 			w.WriteHeader(http.StatusPreconditionRequired)
 			msg := "system configuration required"
-			json.NewEncoder(w).Encode(SessionResponse{
+			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,
 				Configured:    false,
@@ -143,11 +118,23 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 		}
 		systemSecret := cfg.SystemSecret
 
+		c, err := r.Cookie("os_session")
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			msg := "login required"
+			json.NewEncoder(w).Encode(dto.SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    true,
+			})
+			return
+		}
+
 		isValid, err := authSvc.ValidateSession(r.Context(), c.Value, systemSecret)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			msg := "session validation error"
-			json.NewEncoder(w).Encode(SessionResponse{
+			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,
 				Configured:    true,
@@ -157,7 +144,7 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 		if !isValid {
 			w.WriteHeader(http.StatusUnauthorized)
 			msg := "invalid or expired session"
-			json.NewEncoder(w).Encode(SessionResponse{
+			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,
 				Configured:    true,
@@ -165,7 +152,7 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 			return
 		}
 
-		json.NewEncoder(w).Encode(SessionResponse{
+		json.NewEncoder(w).Encode(dto.SessionResponse{
 			Authenticated: true,
 			Configured:    true,
 		})
@@ -186,6 +173,6 @@ func LogoutHandler() http.HandlerFunc {
 			MaxAge:   -1,
 		})
 
-		json.NewEncoder(w).Encode(LogoutResponse{Success: true})
+		json.NewEncoder(w).Encode(dto.LogoutResponse{Success: true})
 	}
 }

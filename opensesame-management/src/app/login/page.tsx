@@ -3,8 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { LoginForm } from "@/components/login-form";
-import { api } from "@/lib/api/api";
-import { LOGIN_URL } from "@/lib/constants";
+import { api, ApiRoute } from "@/lib/api/api";
 import packageJson from "../../../package.json";
 
 interface LoginResponse {
@@ -21,13 +20,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data } = await api.post<LoginResponse>(LOGIN_URL, {
+      const { data } = await api.post<LoginResponse>(ApiRoute.LOGIN, {
         password,
       });
 
       if (data.success) {
         router.push("/");
       } else {
+        
       }
     } catch (err) {
       console.error("Login error", err);
@@ -44,7 +44,7 @@ export default function LoginPage() {
   return (
     <div className="bg-muted flex h-full flex-col items-center justify-between overflow-scroll dark:bg-gradient-to-br dark:from-zinc-950 dark:via-black dark:to-zinc-900">
       <div />
-      <div className="flex w-full max-w-96 flex-col gap-6 my-8">
+      <div className="my-8 flex w-full max-w-96 flex-col gap-6">
         <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
       </div>
       <footer className="border-divider bg-card w-full flex-none border-t px-4 py-2">
