@@ -6,57 +6,51 @@ import { AuthResponse } from "./app/types/auth";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  const currentPath = (route: AppRoute): boolean => {
+    return pathname.includes(route);
+  };
+
   if (isInternalPath(req)) return NextResponse.next();
 
   const cookies: string = req.headers.get("cookie") ?? "";
   let session: AuthResponse;
-  let errorMsg: string | undefined;
+  let loginErrorMsg: string | undefined = "Please log in.";
+  const url = req.nextUrl.clone();
+
   try {
-    const response = await fetch(HUB_BASE_URL + ApiRoute.SESSION, {
+    const res = await fetch(HUB_BASE_URL + ApiRoute.SESSION, {
       method: "GET",
-      headers: {
-        cookie: cookies,
-      },
+      headers: { cookie: cookies },
     });
 
-    session = (await response.json()) as AuthResponse;
-
-    if (!response.ok) {
-      errorMsg = "Please log in.";
-    }
+    session = (await res.json()) as AuthResponse;
   } catch {
-    // TODO: parse error codes, but we should likely say here we're unable to get to the hub
-    errorMsg = "Unable to reach the hub, please try again later.";
+    loginErrorMsg = "Unable to reach the hub, please try again later.";
     session = {
-      configured: false,
+      // Set configured true here to prevent user access to /setup until we get a valid response
+      configured: true,
       authenticated: false,
     } as AuthResponse;
   }
 
   if (!session.configured) {
-    if (pathname.includes(AppRoute.SETUP)) {
+    if (currentPath(AppRoute.SETUP)) {
       return NextResponse.next();
+    } else {
+      url.pathname = AppRoute.SETUP;
+      return NextResponse.redirect(url);
     }
-
-    const url = req.nextUrl.clone();
-    url.pathname = AppRoute.SETUP;
-    return NextResponse.redirect(url);
   }
 
   if (session.authenticated) {
-    if (
-      pathname.includes(AppRoute.SETUP) ||
-      pathname.includes(AppRoute.LOGIN)
-    ) {
-      const url = req.nextUrl.clone();
+    if (currentPath(AppRoute.SETUP) || currentPath(AppRoute.LOGIN)) {
       url.pathname = AppRoute.HOME;
       return NextResponse.redirect(url);
     }
   } else {
-    if (!pathname.includes(AppRoute.LOGIN)) {
-      const url = req.nextUrl.clone();
+    if (!currentPath(AppRoute.LOGIN)) {
       url.pathname = AppRoute.LOGIN;
-      url.searchParams.set("error", errorMsg ?? "Please log in.");
+      url.searchParams.set("error", loginErrorMsg);
       return NextResponse.redirect(url);
     }
 
