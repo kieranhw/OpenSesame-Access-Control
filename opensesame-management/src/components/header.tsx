@@ -3,7 +3,7 @@ import Image from "next/image";
 
 function Header() {
   return (
-    <header className="border-divider bg-card flex-none border-b px-4 py-2">
+    <header className="border-divider bg-card z-50 flex-none border-b px-4 py-2">
       <div className="flex h-8 items-center gap-3">
         <Image
           src="/sesame.png"

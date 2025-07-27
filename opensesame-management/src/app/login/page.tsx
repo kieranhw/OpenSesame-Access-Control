@@ -3,12 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { LoginForm } from "@/components/login-form";
-import { api, ApiRoute } from "@/lib/api/api";
+import { login } from "@/lib/api/api";
 import packageJson from "../../../package.json";
-
-interface LoginResponse {
-  success: boolean;
-}
+import { AppRoute } from "@/lib/app-routes";
+import { LoginApiResponse } from "@/types/login-response";
+import { ApiRoute } from "@/lib/api/api-routes";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -20,21 +19,30 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data } = await api.post<LoginResponse>(ApiRoute.LOGIN, {
-        password,
-      });
+      const response = await login(password);
 
-      if (data.success) {
-        router.push("/");
+      const loginData = response.data;
+      if (loginData && loginData.authenticated && loginData.configured) {
+        router.push(AppRoute.HOME);
+      } else if (loginData && loginData.message) {
+        setError(loginData.message);
       } else {
-        
+        setError("Login failed, please check your credentials.");
       }
     } catch (err) {
-      console.error("Login error", err);
+      console.error("Login API error:", err);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.error || err.message || "Login failed");
+        const backendError = err.response?.data as
+          | { message?: string; error?: string }
+          | undefined;
+        setError(
+          backendError?.message ||
+            backendError?.error ||
+            err.message ||
+            "Login failed",
+        );
       } else {
-        setError("Login failed");
+        setError("An unexpected error occurred during login.");
       }
     } finally {
       setLoading(false);
