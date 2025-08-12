@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { HUB_BASE_URL } from "./lib/api/api";
-import { AppRoute } from "./lib/app-routes";
-import { AuthResponse } from "./app/types/auth";
-import { ApiRoute } from "./lib/api/api-routes";
+import { AppRoute } from "@/lib/app-routes";
+import { ApiRoute, HUB_BASE_URI } from "@/lib/api/api";
+import { AuthResponse } from "@/lib/api/auth";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -19,7 +18,7 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
 
   try {
-    const res = await fetch(HUB_BASE_URL + ApiRoute.SESSION, {
+    const res = await fetch(HUB_BASE_URI + ApiRoute.SESSION, {
       method: "GET",
       headers: { cookie: cookies },
     });
