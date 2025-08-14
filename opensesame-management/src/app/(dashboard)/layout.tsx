@@ -16,12 +16,8 @@ export default function DashboardLayout({
     <SidebarProvider>
       <AppSidebar />
       {/* Make SidebarInset a full-height flex column */}
-      <SidebarInset className="flex flex-col min-h-screen">
-        <nav
-          className="sticky top-0 z-50 h-12 border-b bg-background/25 backdrop-blur-md 
-                     shrink-0 flex items-center gap-2 px-4 transition-[width,height] ease-linear 
-                     group-has-data-[collapsible=icon]/sidebar-wrapper:h-12"
-        >
+      <SidebarInset className="flex min-h-screen flex-col">
+        <nav className="bg-background/25 sticky top-0 z-50 flex h-12 shrink-0 items-center gap-2 border-b px-4 backdrop-blur-sm transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <SidebarTrigger className="-ml-1" />
           <Separator
             orientation="vertical"
@@ -31,7 +27,7 @@ export default function DashboardLayout({
         </nav>
 
         {/* This is the scrollable, growing content area */}
-        <main className="flex-1 flex flex-col">{children}</main>
+        <main className="flex flex-1 flex-col">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

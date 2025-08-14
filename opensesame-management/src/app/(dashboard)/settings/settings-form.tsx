@@ -18,9 +18,14 @@ import {
 import { Input } from "@/components/ui/input";
 
 const FormSchema = z.object({
-  systemName: z.string().min(1, {
-    message: "Must be at least 1 character.",
-  }),
+  systemName: z
+    .string()
+    .min(1, {
+      message: "Must be at least 1 character.",
+    })
+    .max(50, {
+      message: "Must be at most 50 characters.",
+    }),
 });
 
 export function SettingsForm() {
@@ -45,23 +50,18 @@ export function SettingsForm() {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="my-4 w-full space-y-6"
-      >
-        <div className="max-w-[500px]">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
+        <div className="border-b pb-8">
           <FormField
             control={form.control}
             name="systemName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-muted-foreground">
-                  System Name
-                </FormLabel>
+                <FormLabel>System Name</FormLabel>
                 <FormControl>
                   <Input
                     className="max-w-[300px]"
-                      placeholder="Enter a name for your system"
+                    placeholder="Enter a name for your system"
                     {...field}
                   />
                 </FormControl>
@@ -74,7 +74,9 @@ export function SettingsForm() {
             )}
           />
         </div>
-        <Button type="submit">Submit</Button>
+        <div className="flex justify-end">
+          <Button type="submit">Submit</Button>
+        </div>
       </form>
     </Form>
   );
