@@ -3,6 +3,7 @@ import { Lexend } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import Header from "@/components/header";
+import { Toaster } from "@/components/ui/sonner";
 
 const montserrat = Lexend({
   variable: "--font-lexend",

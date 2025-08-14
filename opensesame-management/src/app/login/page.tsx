@@ -10,15 +10,13 @@ import { LoadState } from "@/types/load-state";
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const urlError = searchParams.get("error") || undefined;
+
   const [error, setError] = useState<string | undefined>(urlError);
   const [loading, setLoading] = useState<LoadState>(LoadState.IDLE);
 
   useEffect(() => {
-    if (urlError) {
-      setError(urlError);
-    }
+    if (urlError) setError(urlError);
   }, [urlError]);
 
   async function handleLogin(password: string) {
@@ -29,7 +27,6 @@ export default function LoginPage() {
 
     if (data && data.authenticated && data.configured) {
       router.push(AppRoute.HOME);
-      setLoading(LoadState.SUCCESS);
       return;
     }
 

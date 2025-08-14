@@ -1,4 +1,3 @@
-// components/Breadcrumbs.tsx
 "use client";
 
 import React, { Fragment, JSX } from "react";
@@ -17,7 +16,6 @@ type TitleMap = {
   [K in AppRoute]?: string;
 };
 
-// override the dynamic segment with explicit titles
 const TITLE_MAP: TitleMap = {
   [AppRoute.HOME]: "Home",
 };
@@ -31,7 +29,6 @@ export const Breadcrumbs: React.FC = (): JSX.Element => {
   const segments: string[] = pathname.split("/").filter(Boolean);
 
   if (segments.length == 0) {
-    // have to explicitly push empty path i.e. "/" as we can't split that
     segments.push(pathname);
   }
 

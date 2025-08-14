@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
 
   const cookies: string = req.headers.get("cookie") ?? "";
   let session: AuthResponse;
-  let loginErrorMsg: string | undefined = "Please log in.";
+  let loginErrorMsg: string | undefined = "Session expired, please log in.";
   const url = req.nextUrl.clone();
 
   try {
