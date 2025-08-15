@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AppRoute } from "@/lib/app-routes";
 import { ApiRoute, HUB_BASE_URI } from "@/lib/api/api";
-import { AuthResponse } from "@/lib/api/auth";
+import { SessionResponse } from "@/lib/api/session";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -13,7 +13,7 @@ export async function middleware(req: NextRequest) {
   if (isInternalPath(req)) return NextResponse.next();
 
   const cookies: string = req.headers.get("cookie") ?? "";
-  let session: AuthResponse;
+  let session: SessionResponse;
   let loginErrorMsg: string | undefined = "Session expired, please log in.";
   const url = req.nextUrl.clone();
 
@@ -23,14 +23,14 @@ export async function middleware(req: NextRequest) {
       headers: { cookie: cookies },
     });
 
-    session = (await res.json()) as AuthResponse;
+    session = (await res.json()) as SessionResponse;
   } catch {
     loginErrorMsg = "Unable to reach the hub, please try again later.";
     session = {
       // Set configured true here to prevent user access to /setup until we get a valid response
       configured: true,
       authenticated: false,
-    } as AuthResponse;
+    } as SessionResponse;
   }
 
   if (!session.configured) {

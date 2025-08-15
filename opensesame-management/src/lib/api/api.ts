@@ -1,4 +1,4 @@
-import { auth } from "./auth";
+import { auth } from "./session";
 import axios, { AxiosInstance } from "axios";
 import camelcaseKeys from "camelcase-keys";
 import snakecaseKeys from "snakecase-keys";
@@ -9,9 +9,7 @@ export type ApiResponse<T> = { data: T; error?: never } | { data?: never; error:
 export const HUB_BASE_URI = "http://localhost:11072/management";
 
 export enum ApiRoute {
-  LOGIN = "/login",
   SESSION = "/session",
-  LOGOUT = "/logout",
   CONFIG = "/config",
 }
 

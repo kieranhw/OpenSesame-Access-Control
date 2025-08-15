@@ -1,6 +1,6 @@
-import { ApiResponse, hubApiClient } from "./api";
+import { ApiResponse, ApiRoute, hubApiClient } from "./api";
 
-export interface AuthResponse {
+export interface SessionResponse {
   message?: string;
   authenticated: boolean;
   configured: boolean;
@@ -13,9 +13,9 @@ export interface LogoutResponse {
 /**
  * Login with password
  */
-async function login(password: string): Promise<ApiResponse<AuthResponse>> {
+async function login(password: string): Promise<ApiResponse<SessionResponse>> {
   try {
-    const res = await hubApiClient.post<AuthResponse>("/login", { password });
+    const res = await hubApiClient.post<SessionResponse>(ApiRoute.SESSION, { password });
 
     switch (res.status) {
       case 200:
@@ -36,24 +36,21 @@ async function login(password: string): Promise<ApiResponse<AuthResponse>> {
 /**
  * Validate current session
  */
-async function getSession(): Promise<ApiResponse<AuthResponse>> {
+async function getSession(): Promise<ApiResponse<SessionResponse>> {
   try {
-    const res = await hubApiClient.get<AuthResponse>("/session");
+    const res = await hubApiClient.get<SessionResponse>(ApiRoute.SESSION);
 
-    if (res.status === 401) {
-      return { error: new Error("Login required") };
+    switch (res.status) {
+      case 200:
+        return { data: res.data };
+      case 401:
+        return { error: new Error("Login required") };
+      case 428:
+        return { error: new Error("System configuration required") };
+      default:
+        console.error(`Unexpected response from /session: ${res.status}`);
+        return { error: new Error("Session validation failed") };
     }
-
-    if (res.status === 428) {
-      return { error: new Error("System configuration required") };
-    }
-
-    if (res.status !== 200) {
-      console.error(`Unexpected response from /session: ${res.status}`);
-      return { error: new Error("Session validation failed") };
-    }
-
-    return { data: res.data };
   } catch (err) {
     console.error("Unexpected error from /session:", err);
     return { error: new Error("Unknown error during session validation") };
@@ -65,7 +62,7 @@ async function getSession(): Promise<ApiResponse<AuthResponse>> {
  */
 async function logout(): Promise<ApiResponse<LogoutResponse>> {
   try {
-    const res = await hubApiClient.delete<LogoutResponse>("/logout");
+    const res = await hubApiClient.delete<LogoutResponse>(ApiRoute.SESSION);
 
     if (res.status !== 200) {
       console.error(`Unexpected response from /logout: ${res.status}`);

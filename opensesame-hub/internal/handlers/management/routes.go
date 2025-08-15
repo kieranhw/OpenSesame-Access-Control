@@ -1,4 +1,3 @@
-// management/router.go
 package management
 
 import (
@@ -24,9 +23,10 @@ func MountRoutes(
 	// public routes
 	parent.HandleFunc("/management/config", GetSystemConfig(configSvc)).Methods("GET")
 	parent.HandleFunc("/management/config", PostSystemConfig(configSvc)).Methods("POST")
-	parent.HandleFunc("/management/login", LoginHandler(configSvc, authSvc)).Methods("POST")
+	
+	parent.HandleFunc("/management/session", LoginHandler(configSvc, authSvc)).Methods("POST")
 	parent.HandleFunc("/management/session", ValidateSessionHandler(configSvc, authSvc)).Methods("GET")
-	parent.HandleFunc("/management/logout", LogoutHandler()).Methods("DELETE")
+	parent.HandleFunc("/management/session", LogoutHandler()).Methods("DELETE")
 
 	// protected routes
 	mgmt := parent.PathPrefix("/management").Subrouter()
