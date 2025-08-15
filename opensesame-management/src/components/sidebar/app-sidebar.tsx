@@ -2,14 +2,10 @@
 
 import * as React from "react"
 import {
-  BookOpen,
-  Bot,
-  DoorClosed,
   DoorClosedLocked,
   House,
   KeyRound,
   MonitorSmartphone,
-  Phone,
   Settings
 } from "lucide-react"
 
