@@ -1,15 +1,11 @@
-package management
+package handlers
 
 import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
 	"opensesame/internal/service"
-
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func GetSystemConfig(svc *service.ConfigService) http.HandlerFunc {
@@ -54,42 +50,20 @@ func CreateSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 			return
 		}
 
-		var req dto.CreateConfigPayload
+		var req dto.CreateConfigRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		pwdHash, err := bcrypt.GenerateFromPassword(
-			[]byte(req.AdminPassword), bcrypt.DefaultCost,
-		)
+		config, err := svc.CreateConfig(r.Context(), req)
 		if err != nil {
-			http.Error(w, "internal error during password hashing", http.StatusInternalServerError)
-			return
-		}
-
-		secret := uuid.NewString()
-		backupCode := uuid.NewString()
-
-		entity := &db.SystemConfig{
-			SystemName:        req.SystemName,
-			SessionTimeoutSec: 86400,
-			AdminPasswordHash: string(pwdHash),
-			SystemSecret:      secret,
-			BackupCode:        backupCode,
-		}
-
-		if err := svc.CreateConfig(r.Context(), entity); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(dto.ConfigResponse{
-			Configured: true,
-			SystemName: &entity.SystemName,
-			BackupCode: &entity.BackupCode,
-		})
+		json.NewEncoder(w).Encode(config)
 	}
 }
 
@@ -97,7 +71,7 @@ func UpdateSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		var reqPayload dto.UpdateConfigPayload
+		var reqPayload dto.UpdateConfigRequest
 		if err := json.NewDecoder(r.Body).Decode(&reqPayload); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

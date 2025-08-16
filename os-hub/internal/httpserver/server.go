@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"opensesame/internal/config"
-	"opensesame/internal/handlers/management"
+	handlers "opensesame/internal/handlers/management"
 	"opensesame/internal/middleware"
 	"opensesame/internal/models/types"
 
@@ -24,7 +24,7 @@ func AddHTTPRoutes(svcs *types.Services) *mux.Router {
 	r.Use(middleware.HTTPLogger)
 	r.Use(middleware.ValidateJSONBody)
 
-	management.MountRoutes(r, svcs)
+	handlers.MountManagementRoutes(r, svcs)
 
 	return r
 }

@@ -1,4 +1,4 @@
-package management
+package handlers
 
 import (
 	"net/http"
@@ -8,7 +8,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func MountRoutes(parent *mux.Router, svcs *types.Services) {
+func MountManagementRoutes(parent *mux.Router, svcs *types.Services) {
+	// TODO: this should be hosted on :80 in production
 	parent.Use(middleware.CORSMiddleware("http://localhost:3000"))
 
 	parent.PathPrefix("/management/").Methods("OPTIONS").HandlerFunc(
@@ -16,7 +17,7 @@ func MountRoutes(parent *mux.Router, svcs *types.Services) {
 			w.WriteHeader(http.StatusNoContent)
 		})
 
-	// public routes
+	// add public routes to parent
 	parent.HandleFunc("/management/config", GetSystemConfig(svcs.Config)).Methods("GET")
 	parent.HandleFunc("/management/config", CreateSystemConfig(svcs.Config)).Methods("POST")
 
@@ -24,7 +25,7 @@ func MountRoutes(parent *mux.Router, svcs *types.Services) {
 	parent.HandleFunc("/management/session", ValidateSessionHandler(svcs.Config, svcs.Auth)).Methods("GET")
 	parent.HandleFunc("/management/session", LogoutHandler()).Methods("DELETE")
 
-	// protected routes
+	// add protected routes to subrouter
 	mgmt := parent.PathPrefix("/management").Subrouter()
 	mgmt.Use(middleware.MgmtSessionValidator(svcs.Config, svcs.Auth))
 

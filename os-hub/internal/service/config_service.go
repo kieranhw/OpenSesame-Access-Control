@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
 	"opensesame/internal/repository"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -39,8 +41,6 @@ func (s *ConfigService) GetSystemConfig(ctx context.Context) (*dto.ConfigRespons
 	return s.toConfigResponse(cfg), nil
 }
 
-// GetSystemConfigEntity returns the full entity including sensitive fields
-// This is used internally by other services like AuthService
 func (s *ConfigService) GetSystemConfigEntity(ctx context.Context) (*db.SystemConfig, error) {
 	cfg, err := s.repo.GetSystemConfig(ctx)
 	if err != nil {
@@ -49,22 +49,51 @@ func (s *ConfigService) GetSystemConfigEntity(ctx context.Context) (*db.SystemCo
 	return cfg, nil
 }
 
-func (s *ConfigService) CreateConfig(ctx context.Context, cfg *db.SystemConfig) error {
+func (s *ConfigService) CreateConfig(ctx context.Context, payload dto.CreateConfigRequest) (*dto.ConfigResponse, error) {
+	if len(strings.TrimSpace(payload.SystemName)) <= 1 ||
+		len(strings.TrimSpace(payload.AdminPassword)) <= 1 {
+		return nil, fmt.Errorf("invalid config: system name and admin password must be longer than 1 character")
+	}
+
 	configured, err := s.IsSystemConfigured(ctx)
 	if err != nil {
-		return fmt.Errorf("error checking configuration status before create: %w", err)
+		return nil, fmt.Errorf("unable to retrieve system configuration: %w", err)
 	}
 	if configured {
-		return ErrAlreadyConfigured
+		return nil, ErrAlreadyConfigured
 	}
 
-	if err := s.repo.CreateSystemConfig(ctx, cfg); err != nil {
-		return fmt.Errorf("creating system config: %w", err)
+	adminPasswordHash, err := bcrypt.GenerateFromPassword([]byte(payload.AdminPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("hashing admin password: %w", err)
 	}
-	return nil
+
+	secret := uuid.NewString()
+	backupCode := uuid.NewString()
+
+	sysCfg := &db.SystemConfig{
+		SystemName:        payload.SystemName,
+		SessionTimeoutSec: 86400,
+		AdminPasswordHash: string(adminPasswordHash),
+		SystemSecret:      secret,
+		BackupCode:        backupCode,
+	}
+
+	if err := s.repo.CreateSystemConfig(ctx, sysCfg); err != nil {
+		return nil, fmt.Errorf("creating system config: %w", err)
+	}
+
+	cfgDto := &dto.ConfigResponse{
+		Configured:        true,
+		SystemName:        &sysCfg.SystemName,
+		BackupCode:        &backupCode,
+		SessionTimeoutSec: &sysCfg.SessionTimeoutSec,
+	}
+
+	return cfgDto, nil
 }
 
-func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateConfigPayload) (*db.SystemConfig, error) {
+func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateConfigRequest) (*db.SystemConfig, error) {
 	if payload.SystemName == nil && payload.AdminPassword == nil && payload.SessionTimeoutSec == nil {
 		return nil, ErrNoUpdateFields
 	}
@@ -97,7 +126,7 @@ func (s *ConfigService) toConfigResponse(cfg *db.SystemConfig) *dto.ConfigRespon
 	}
 }
 
-func (s *ConfigService) applyConfigUpdates(config *db.SystemConfig, payload *dto.UpdateConfigPayload) error {
+func (s *ConfigService) applyConfigUpdates(config *db.SystemConfig, payload *dto.UpdateConfigRequest) error {
 	if payload.SystemName != nil {
 		config.SystemName = *payload.SystemName
 	}
