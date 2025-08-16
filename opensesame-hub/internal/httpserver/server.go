@@ -15,7 +15,7 @@ import (
 
 func Start(cfg *config.Config, handler http.Handler) error {
 	addr := fmt.Sprintf(":%s", cfg.HttpListenerPort)
-	log.Printf("starting HTTP server on %s", addr)
+	log.Printf("Starting HTTP server on %s", addr)
 	return http.ListenAndServe(addr, handler)
 }
 
