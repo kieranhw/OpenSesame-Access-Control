@@ -24,7 +24,7 @@ func AddHttpRoutes(svcs *types.Services) *mux.Router {
 	r.Use(middleware.HttpLogger)
 	r.Use(middleware.ValidateJSONBody)
 
-	management.MountRoutes(r, svcs.Config, svcs.Auth)
+	management.MountRoutes(r, svcs)
 
 	return r
 }

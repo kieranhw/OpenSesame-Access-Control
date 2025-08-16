@@ -3,16 +3,12 @@ package management
 import (
 	"net/http"
 	"opensesame/internal/middleware"
-	"opensesame/internal/service"
+	"opensesame/internal/models/types"
 
 	"github.com/gorilla/mux"
 )
 
-func MountRoutes(
-	parent *mux.Router,
-	configSvc *service.ConfigService,
-	authSvc *service.AuthService,
-) {
+func MountRoutes(parent *mux.Router, svcs *types.Services) {
 	parent.Use(middleware.CORSMiddleware("http://localhost:3000"))
 
 	parent.PathPrefix("/management/").Methods("OPTIONS").HandlerFunc(
@@ -21,16 +17,16 @@ func MountRoutes(
 		})
 
 	// public routes
-	parent.HandleFunc("/management/config", GetSystemConfig(configSvc)).Methods("GET")
-	parent.HandleFunc("/management/config", CreateSystemConfig(configSvc)).Methods("POST")
+	parent.HandleFunc("/management/config", GetSystemConfig(svcs.Config)).Methods("GET")
+	parent.HandleFunc("/management/config", CreateSystemConfig(svcs.Config)).Methods("POST")
 
-	parent.HandleFunc("/management/session", LoginHandler(authSvc)).Methods("POST")
-	parent.HandleFunc("/management/session", ValidateSessionHandler(configSvc, authSvc)).Methods("GET")
+	parent.HandleFunc("/management/session", LoginHandler(svcs.Auth)).Methods("POST")
+	parent.HandleFunc("/management/session", ValidateSessionHandler(svcs.Config, svcs.Auth)).Methods("GET")
 	parent.HandleFunc("/management/session", LogoutHandler()).Methods("DELETE")
 
 	// protected routes
 	mgmt := parent.PathPrefix("/management").Subrouter()
-	mgmt.Use(middleware.MgmtSessionValidator(configSvc, authSvc))
+	mgmt.Use(middleware.MgmtSessionValidator(svcs.Config, svcs.Auth))
 
-	mgmt.HandleFunc("/config", UpdateSystemConfig(configSvc)).Methods("PATCH")
+	mgmt.HandleFunc("/config", UpdateSystemConfig(svcs.Config)).Methods("PATCH")
 }

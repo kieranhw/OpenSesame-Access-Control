@@ -34,8 +34,8 @@ func GetSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 
 		json.NewEncoder(w).Encode(dto.ConfigResponse{
 			Configured:        true,
-			SystemName:        &cfg.SystemName,
-			SessionTimeoutSec: &cfg.SessionTimeoutSec,
+			SystemName:        cfg.SystemName,
+			SessionTimeoutSec: cfg.SessionTimeoutSec,
 		})
 	}
 }
