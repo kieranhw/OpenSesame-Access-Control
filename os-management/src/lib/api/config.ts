@@ -64,7 +64,7 @@ async function PATCH(request: ConfigPatch): Promise<ApiResponse<ConfigResponse>>
       case 200:
         return { data: res.data };
       case 400:
-        return { error: new Error("Bad request")}
+        return { error: new Error("Error, " + res.data)}
       case 401:
         return { error: new Error("Unauthorized, please log in") };
       case 428:
