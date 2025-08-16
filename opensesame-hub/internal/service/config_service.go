@@ -1,4 +1,3 @@
-// service/config_service.go
 package service
 
 import (
@@ -90,7 +89,6 @@ func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateCon
 	return systemConfig, nil
 }
 
-// Helper methods
 func (s *ConfigService) toConfigResponse(cfg *db.SystemConfig) *dto.ConfigResponse {
 	return &dto.ConfigResponse{
 		Configured:        true,

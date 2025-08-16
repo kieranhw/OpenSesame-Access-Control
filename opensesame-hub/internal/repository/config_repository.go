@@ -1,4 +1,3 @@
-// repository/config_repository.go
 package repository
 
 import (
