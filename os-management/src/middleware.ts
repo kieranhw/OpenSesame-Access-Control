@@ -26,25 +26,25 @@ export async function middleware(req: NextRequest) {
     session = (await res.json()) as SessionResponse;
     console.log("session", session);
   } catch {
+    console.log("can't reach hub");
     loginErrorMsg = "Unable to reach the hub, please try again later.";
     session = {
-      // Set configured true here to prevent user access to /setup until we get a valid response
+      /*
+        If we can't communicate with the hub, we don't know if configuration is complete,
+        so we assume it is to prevent confusing the user with a redirect to /setup
+      */
       configured: true,
       authenticated: false,
     } as SessionResponse;
   }
 
   if (!session.configured) {
-    console.log("not configured");
-
     if (currentPath(AppRoute.SETUP)) {
       return NextResponse.next();
     } else {
       url.pathname = AppRoute.SETUP;
       return NextResponse.redirect(url);
     }
-  } else {
-    console.log("configured");
   }
 
   if (session.authenticated) {

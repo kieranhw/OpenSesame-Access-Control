@@ -10,6 +10,7 @@ export type ConfigResponse = {
 export type ConfigPost = {
   systemName: string;
   adminPassword: string;
+  sessionTimeoutSec: number;
 };
 
 export type ConfigPatch = {
@@ -41,8 +42,10 @@ async function POST(request: ConfigPost): Promise<ApiResponse<ConfigResponse>> {
   try {
     const res = await hubApiClient.post<ConfigResponse>("/config", request);
     switch (res.status) {
-      case 200:
+      case 201:
         return { data: res.data };
+      case 409:
+        return { error: new Error("System already configured") };
       case 428:
         return { error: new Error("System configuration required") };
       default:
@@ -60,6 +63,8 @@ async function PATCH(request: ConfigPatch): Promise<ApiResponse<ConfigResponse>>
     switch (res.status) {
       case 200:
         return { data: res.data };
+      case 400:
+        return { error: new Error("Bad request")}
       case 401:
         return { error: new Error("Unauthorized, please log in") };
       case 428:

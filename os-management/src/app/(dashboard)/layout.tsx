@@ -16,7 +16,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         <main className="flex flex-1 flex-col">{children}</main>
-        <Toaster />
       </SidebarInset>
     </SidebarProvider>
   );

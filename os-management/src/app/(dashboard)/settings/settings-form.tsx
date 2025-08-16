@@ -127,6 +127,9 @@ export function SettingsForm() {
       return;
     }
 
+    setLoadState(LoadState.LOADING);
+    setFetchError("");
+
     const request: ConfigPatch = {};
 
     if (hasChanged("systemName", data, config)) {
@@ -158,7 +161,6 @@ export function SettingsForm() {
       return;
     }
 
-    setLoadState(LoadState.LOADING);
     api.config.PATCH(request).then(({ data: resData, error }) => {
       if (error) {
         setLoadState(LoadState.ERROR);

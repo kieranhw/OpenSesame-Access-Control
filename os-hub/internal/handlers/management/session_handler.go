@@ -46,6 +46,16 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
+		configured, err := configSvc.IsSystemConfigured(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !configured {
+			json.NewEncoder(w).Encode(dto.ConfigResponse{Configured: false})
+			return
+		}
+
 		cookie, err := r.Cookie("os_session")
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

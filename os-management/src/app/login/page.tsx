@@ -44,17 +44,11 @@ export default function LoginPage() {
     <div className="bg-muted flex h-full flex-col items-center justify-between overflow-scroll dark:bg-gradient-to-br dark:from-zinc-950 dark:via-black dark:to-zinc-900">
       <div />
       <div className="my-8 flex w-full max-w-96 flex-col gap-6">
-        <LoginForm
-          onSubmit={handleLogin}
-          loading={loading === LoadState.LOADING}
-          error={error}
-        />
+        <LoginForm onSubmit={handleLogin} loading={loading === LoadState.LOADING} error={error} />
       </div>
       <footer className="border-divider bg-card w-full flex-none border-t px-4 py-2">
         <div className="flex h-8 items-center justify-center">
-          <p className="text-muted-foreground text-sm">
-            OpenSesame Management Version {packageJson.version}
-          </p>
+          <p className="text-muted-foreground text-sm">OpenSesame Management Version {packageJson.version}</p>
         </div>
       </footer>
     </div>
