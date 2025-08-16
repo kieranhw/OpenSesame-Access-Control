@@ -4,6 +4,7 @@ export type ConfigResponse = {
   configured: boolean;
   systemName: string;
   backupCode?: string;
+  sessionTimeoutSec: number;
 };
 
 export type ConfigPost = {
@@ -16,6 +17,7 @@ export type ConfigPatch = {
   backupCode?: string;
   password?: string;
   newPassword?: string;
+  sessionTimeoutSec?: number;
 };
 
 async function GET(): Promise<ApiResponse<ConfigResponse>> {

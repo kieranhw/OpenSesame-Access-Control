@@ -13,9 +13,17 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import api from "@/lib/api/api";
-import { ConfigResponse } from "@/types/config-response";
 import { LoadState } from "@/types/load-state";
-import { ConfigPatch } from "@/lib/api/config";
+import { ConfigPatch, ConfigResponse } from "@/lib/api/config";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+export const SessionTimeouts: Record<number, string> = {
+  3600: "1 hour",
+  43200: "12 hours",
+  86400: "24 hours",
+  259200: "3 days",
+  604800: "7 days",
+};
 
 function getFormSchema(changingPassword: boolean) {
   return z
@@ -24,6 +32,10 @@ function getFormSchema(changingPassword: boolean) {
         .string()
         .min(1, { message: "Must be at least 1 character." })
         .max(50, { message: "Must be at most 50 characters." }),
+      sessionTimeoutSec: z
+        .number()
+        .min(3600, { message: "Must be at least 1 hour." })
+        .max(86400 * 30, { message: "Must be at most 30 days." }),
       password: changingPassword
         ? z.string().min(8, { message: "Must be at least 8 characters." })
         : z.string().optional(),
@@ -47,13 +59,12 @@ function getFormSchema(changingPassword: boolean) {
     });
 }
 
-const hasSystemNameChanged = (
-  data: Pick<z.infer<ReturnType<typeof getFormSchema>>, "systemName">,
-  config: ConfigResponse | undefined,
-) => {
+type FormSchema = z.infer<ReturnType<typeof getFormSchema>>;
+type UpdatableKeys = "systemName" | "sessionTimeoutSec";
+function hasChanged<T extends UpdatableKeys>(key: T, data: FormSchema, config: ConfigResponse | undefined): boolean {
   if (!config) return false;
-  return data.systemName.trim() !== config.systemName;
-};
+  return (data[key] as unknown) !== (config[key] as unknown);
+}
 
 export function SettingsForm() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -69,6 +80,7 @@ export function SettingsForm() {
       password: "",
       newPassword: "",
       newPasswordConfirm: "",
+      sessionTimeoutSec: 86400,
     },
   });
 
@@ -76,12 +88,14 @@ export function SettingsForm() {
   const watchedPassword = form.watch("password");
   const watchedNewPassword = form.watch("newPassword");
   const watchedNewPasswordConfirm = form.watch("newPasswordConfirm");
+  const watchedSessionTimeout = form.watch("sessionTimeoutSec");
 
   const watchedData = {
     systemName: watchedSystemName,
     password: watchedPassword,
     newPassword: watchedNewPassword,
     newPasswordConfirm: watchedNewPasswordConfirm,
+    sessionTimeoutSec: watchedSessionTimeout,
   };
 
   useEffect(() => {
@@ -100,11 +114,12 @@ export function SettingsForm() {
       form.reset({
         ...form.getValues(),
         systemName: data.systemName ?? "",
+        sessionTimeoutSec: data.sessionTimeoutSec ?? 86400,
       });
     }
 
     fetchConfig();
-  }, []);
+  }, [form]);
 
   function onSubmit(data: z.infer<ReturnType<typeof getFormSchema>>) {
     if (!config) {
@@ -114,8 +129,12 @@ export function SettingsForm() {
 
     const request: ConfigPatch = {};
 
-    if (hasSystemNameChanged(data, config)) {
+    if (hasChanged("systemName", data, config)) {
       request.systemName = data.systemName.trim();
+    }
+
+    if (hasChanged("sessionTimeoutSec", data, config)) {
+      request.sessionTimeoutSec = data.sessionTimeoutSec;
     }
 
     if (showPasswordModal && data.password && data.newPassword && data.newPasswordConfirm) {
@@ -163,8 +182,7 @@ export function SettingsForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-        <div className="mb-8 space-y-8 border-b pb-8">
-          {/* System Name */}
+        <div className="mb-6 space-y-8 border-b pb-8">
           <FormField
             control={form.control}
             name="systemName"
@@ -187,7 +205,37 @@ export function SettingsForm() {
             )}
           />
 
-          {/* Change Password Toggle */}
+          <FormField
+            control={form.control}
+            name="sessionTimeoutSec"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Session Timeout</FormLabel>
+                <Select
+                  onValueChange={(val) => field.onChange(Number(val))}
+                  value={field.value ? String(field.value) : undefined}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full max-w-[400px]">
+                      <SelectValue placeholder="Select a timeout" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {Object.entries(SessionTimeouts).map(([seconds, label]) => (
+                      <SelectItem key={seconds} value={seconds}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  The amount of time before a user is automatically logged out due to inactivity.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <div className="flex items-center justify-between">
             <div className="flex-col space-y-2">
               <FormLabel>Change Password</FormLabel>
@@ -198,10 +246,8 @@ export function SettingsForm() {
             </Button>
           </div>
 
-          {/* Password Modal */}
           {showPasswordModal && (
             <Card className="bg-secondary/25 dark:bg-secondary/50 p-4 shadow-none">
-              {/* Auth Method Switch */}
               <div className="flex items-center gap-4">
                 <FormLabel htmlFor="auth-method">Authentication Method</FormLabel>
                 <Switch
@@ -212,7 +258,6 @@ export function SettingsForm() {
                 <Badge variant={"default"}>{authMethod === "password" ? "Password" : "Backup Code"}</Badge>
               </div>
 
-              {/* Current Password / Backup Code */}
               <FormField
                 control={form.control}
                 name="password"
@@ -233,7 +278,6 @@ export function SettingsForm() {
                 )}
               />
 
-              {/* New Admin Password */}
               <FormField
                 control={form.control}
                 name="newPassword"
@@ -255,7 +299,6 @@ export function SettingsForm() {
                 )}
               />
 
-              {/* Confirm New Admin Password */}
               <FormField
                 control={form.control}
                 name="newPasswordConfirm"
@@ -279,13 +322,15 @@ export function SettingsForm() {
           )}
         </div>
 
-        {/* Submit */}
         <div className="flex items-center justify-end gap-4">
           <p className="text-destructive text-sm">{fetchError}</p>
           <Button
             type="submit"
             disabled={
-              loadState === LoadState.LOADING || (!hasSystemNameChanged(watchedData, config) && !showPasswordModal)
+              loadState === LoadState.LOADING ||
+              (!hasChanged("systemName", watchedData, config) &&
+                !hasChanged("sessionTimeoutSec", watchedData, config) &&
+                !showPasswordModal)
             }
           >
             {loadState === LoadState.LOADING ? "Saving..." : "Submit"}
