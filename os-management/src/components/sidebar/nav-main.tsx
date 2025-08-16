@@ -42,7 +42,7 @@ export function SidebarItem({ title, url, icon: Icon }: NavItem): JSX.Element {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild tooltip={title}>
-        <Link href={url}>
+        <Link href={url} draggable={false}>
           {Icon && <Icon />}
           <span>{title}</span>
         </Link>
