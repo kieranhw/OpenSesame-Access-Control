@@ -4,8 +4,9 @@ export enum AppRoute {
     SETUP = "/setup",
     // private
     HOME = "/",
-    ENTRIES = "/entries",
+    ENTRY_DEVICES = "/entry-devices",
     ACCESS = "/access",
+    CREDENTIALS = "/credentials",
     CLIENTS = "/clients",
     SETTINGS = "/settings",
 }

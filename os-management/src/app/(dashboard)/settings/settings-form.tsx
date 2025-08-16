@@ -252,7 +252,7 @@ export function SettingsForm() {
           </div>
 
           {showPasswordModal && (
-            <Card className="bg-secondary/25 dark:bg-secondary/50 p-4 shadow-none">
+            <Card className="bg-accent p-4 shadow-none">
               <div className="flex items-center gap-4">
                 <FormLabel htmlFor="auth-method">Authentication Method</FormLabel>
                 <Switch

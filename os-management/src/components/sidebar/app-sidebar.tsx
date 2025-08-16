@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   DoorClosedLocked,
+  FileLock2,
   House,
   KeyRound,
   MonitorSmartphone,
@@ -25,14 +26,19 @@ const sidebarItems = [
     icon: House,
   },
   {
-    title: "Entries",
-    url: AppRoute.ENTRIES,
+    title: "Entry Devices",
+    url: AppRoute.ENTRY_DEVICES,
     icon: DoorClosedLocked,
   },
   {
     title: "Access Devices",
     url: AppRoute.ACCESS,
     icon: KeyRound,
+  },
+  {
+    title: "Credentials",
+    url: AppRoute.CREDENTIALS,
+    icon: FileLock2
   },
   {
     title: "Clients",
