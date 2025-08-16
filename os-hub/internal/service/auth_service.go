@@ -70,6 +70,7 @@ func (a *AuthService) ValidateSession(ctx context.Context, tokenString string) (
 	token, err := a.parseToken(cfg, tokenString)
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
+			// don't return an error if token expired, just indicate it's invalid
 			return false, nil
 		}
 		return false, err
