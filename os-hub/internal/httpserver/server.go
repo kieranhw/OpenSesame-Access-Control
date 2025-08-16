@@ -19,9 +19,9 @@ func Start(cfg *config.Config, handler http.Handler) error {
 	return http.ListenAndServe(addr, handler)
 }
 
-func AddHttpRoutes(svcs *types.Services) *mux.Router {
+func AddHTTPRoutes(svcs *types.Services) *mux.Router {
 	r := mux.NewRouter()
-	r.Use(middleware.HttpLogger)
+	r.Use(middleware.HTTPLogger)
 	r.Use(middleware.ValidateJSONBody)
 
 	management.MountRoutes(r, svcs)

@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
 
   const cookies: string = req.headers.get("cookie") ?? "";
   let session: SessionResponse;
-  let loginErrorMsg: string | undefined = "Session expired, please log in.";
+  let loginErrorMsg: string = "";
   const url = req.nextUrl.clone();
 
   try {
@@ -24,6 +24,7 @@ export async function middleware(req: NextRequest) {
     });
 
     session = (await res.json()) as SessionResponse;
+    console.log("session", session);
   } catch {
     loginErrorMsg = "Unable to reach the hub, please try again later.";
     session = {
@@ -34,12 +35,16 @@ export async function middleware(req: NextRequest) {
   }
 
   if (!session.configured) {
+    console.log("not configured");
+
     if (currentPath(AppRoute.SETUP)) {
       return NextResponse.next();
     } else {
       url.pathname = AppRoute.SETUP;
       return NextResponse.redirect(url);
     }
+  } else {
+    console.log("configured");
   }
 
   if (session.authenticated) {
@@ -50,7 +55,7 @@ export async function middleware(req: NextRequest) {
   } else {
     if (!currentPath(AppRoute.LOGIN)) {
       url.pathname = AppRoute.LOGIN;
-      url.searchParams.set("error", loginErrorMsg);
+      if (loginErrorMsg) url.searchParams.set("error", loginErrorMsg);
       return NextResponse.redirect(url);
     }
 

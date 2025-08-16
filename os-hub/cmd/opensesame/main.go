@@ -84,7 +84,7 @@ func startApp(cfg *config.Config, gdb *gorm.DB) {
 	repos := createRepositories(gdb)
 	svcs := createServices(repos)
 
-	mux := httpserver.AddHttpRoutes(svcs)
+	mux := httpserver.AddHTTPRoutes(svcs)
 
 	if err := httpserver.Start(cfg, mux); err != nil {
 		log.Fatalf("error starting HTTP server: %v", err)

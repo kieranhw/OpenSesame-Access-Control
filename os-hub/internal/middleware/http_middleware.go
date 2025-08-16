@@ -16,7 +16,7 @@ func (rec *StatusRecorder) WriteHeader(statusCode int) {
 	rec.ResponseWriter.WriteHeader(statusCode)
 }
 
-func HttpLogger(next http.Handler) http.Handler {
+func HTTPLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rec := &StatusRecorder{ResponseWriter: w, StatusCode: http.StatusOK}
 		log.Printf("Request: %s %s", r.Method, r.URL.Path)
