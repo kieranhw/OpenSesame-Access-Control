@@ -67,11 +67,14 @@ function hasChanged<T extends UpdatableKeys>(key: T, data: FormSchema, config: C
 }
 
 export function SettingsForm() {
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [authMethod, setAuthMethod] = useState<"password" | "backup-code">("password");
-  const [fetchError, setFetchError] = useState<string>();
+  // data states
   const [config, setConfig] = useState<ConfigResponse | undefined>();
   const [loadState, setLoadState] = useState<LoadState>(LoadState.LOADING);
+  const [fetchError, setFetchError] = useState<string>();
+
+  // ui states
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [authMethod, setAuthMethod] = useState<"password" | "backup-code">("password");
 
   const form = useForm<z.infer<ReturnType<typeof getFormSchema>>>({
     resolver: zodResolver(getFormSchema(showPasswordModal)),
@@ -122,13 +125,14 @@ export function SettingsForm() {
   }, [form]);
 
   function onSubmit(data: z.infer<ReturnType<typeof getFormSchema>>) {
-    if (!config) {
-      toast.error("Error", { description: "Configuration not loaded yet." });
-      return;
-    }
-
     setLoadState(LoadState.LOADING);
     setFetchError("");
+
+    if (!config) {
+      setFetchError("Error, configuration not loaded yet.");
+      setLoadState(LoadState.ERROR);
+      return;
+    }
 
     const request: ConfigPatch = {};
 
@@ -143,7 +147,7 @@ export function SettingsForm() {
     if (showPasswordModal && data.password && data.newPassword && data.newPasswordConfirm) {
       if (data.newPassword !== data.newPasswordConfirm) {
         setFetchError("New passwords do not match.");
-        toast.error("Error", { description: "New passwords do not match." });
+        setLoadState(LoadState.ERROR);
         return;
       }
 
@@ -157,15 +161,14 @@ export function SettingsForm() {
 
     if (Object.keys(request).length === 0) {
       setFetchError("Nothing to update.");
-      toast.error("Error", { description: "Nothing to update." });
+      setLoadState(LoadState.ERROR);
       return;
     }
 
     api.config.PATCH(request).then(({ data: resData, error }) => {
       if (error) {
+        setFetchError(error.message ?? "Failed to update");
         setLoadState(LoadState.ERROR);
-        setFetchError(error.message);
-        toast("Error", { description: error.message });
         return;
       }
 
@@ -173,11 +176,11 @@ export function SettingsForm() {
         description: "Configuration updated successfully.",
       });
 
+      setLoadState(LoadState.SUCCESS);
+
       if (resData) {
         setConfig((prev) => ({ ...prev, ...resData }));
       }
-
-      setLoadState(LoadState.SUCCESS);
     });
   }
 
