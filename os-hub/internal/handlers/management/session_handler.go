@@ -59,7 +59,15 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 		}
 
 		isValid, err := authSvc.ValidateSession(r.Context(), cookie.Value)
-		if err != nil {
+		if err == service.ErrNotConfigured {
+			msg := service.ErrNotConfigured.Error()
+			json.NewEncoder(w).Encode(dto.SessionResponse{
+				Message:       &msg,
+				Authenticated: false,
+				Configured:    false,
+			})
+			return
+		} else if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			msg := "session validation error"
 			json.NewEncoder(w).Encode(dto.SessionResponse{
@@ -68,8 +76,7 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 				Configured:    true,
 			})
 			return
-		}
-		if !isValid {
+		} else if !isValid {
 			w.WriteHeader(http.StatusUnauthorized)
 			msg := "invalid or expired session"
 			json.NewEncoder(w).Encode(dto.SessionResponse{
