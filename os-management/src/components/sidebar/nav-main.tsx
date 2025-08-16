@@ -1,11 +1,7 @@
 "use client";
 
 import { ChevronRight, type LucideIcon } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -16,6 +12,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { JSX } from "react";
+import Link from "next/link";
 
 export interface NavItem {
   title: string;
@@ -45,21 +42,16 @@ export function SidebarItem({ title, url, icon: Icon }: NavItem): JSX.Element {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild tooltip={title}>
-        <a href={url}>
+        <Link href={url}>
           {Icon && <Icon />}
           <span>{title}</span>
-        </a>
+        </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
 
-export function CollapsibleSidebarItem({
-  title,
-  icon: Icon,
-  items,
-  isActive,
-}: NavItem): JSX.Element {
+export function CollapsibleSidebarItem({ title, icon: Icon, items, isActive }: NavItem): JSX.Element {
   return (
     <Collapsible asChild defaultOpen={isActive} className="group/collapsible">
       <SidebarMenuItem>
