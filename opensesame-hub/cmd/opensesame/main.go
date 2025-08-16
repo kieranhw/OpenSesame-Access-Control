@@ -68,9 +68,6 @@ func setupDatabase(filename string) *gorm.DB {
 func createRepositories(gdb *gorm.DB) *types.Repositories {
 	return &types.Repositories{
 		Config: repository.NewConfigRepository(gdb),
-		// Add other repositories as needed:
-		// session: repository.NewSessionRepository(gdb),
-		// entry:   repository.NewEntryRepository(gdb),
 	}
 }
 
