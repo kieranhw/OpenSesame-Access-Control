@@ -24,9 +24,7 @@ export async function middleware(req: NextRequest) {
     });
 
     session = (await res.json()) as SessionResponse;
-    console.log("session", session);
   } catch {
-    console.log("can't reach hub");
     loginErrorMsg = "Unable to reach the hub, please try again later.";
     session = {
       /*
