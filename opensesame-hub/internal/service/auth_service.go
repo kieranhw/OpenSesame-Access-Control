@@ -1,56 +1,117 @@
+// service/auth_service.go
 package service
 
 import (
 	"context"
 	"errors"
+	"log"
+	"net/http"
 	"time"
 
-	"opensesame/internal/models/db"
+	"opensesame/internal/constants"
+	"opensesame/internal/models/dto"
+	"opensesame/internal/util"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
-	db *gorm.DB
+	configSvc *ConfigService
 }
 
-func NewAuthService(db *gorm.DB) *AuthService {
-	return &AuthService{db: db}
-}
-
-func (a *AuthService) CreateSession(ctx context.Context) (*db.Session, error) {
-	token := uuid.NewString()
-	sess := &db.Session{
-		Token:     token,
-		ExpiresAt: time.Now().Add(24 * time.Hour),
+func NewAuthService(configSvc *ConfigService) *AuthService {
+	return &AuthService{
+		configSvc: configSvc,
 	}
-	if err := a.db.WithContext(ctx).Create(sess).Error; err != nil {
-		return nil, err
+}
+
+func (a *AuthService) Login(ctx context.Context, req dto.LoginRequest) (dto.SessionResponse, *http.Cookie, error) {
+	// Get the full config entity (with sensitive fields) through ConfigService
+	cfg, err := a.configSvc.GetSystemConfigEntity(ctx)
+	if err != nil {
+		return dto.SessionResponse{
+			Message:       util.StrPtr(ErrNotConfigured.Error()),
+			Authenticated: false,
+			Configured:    false,
+		}, nil, ErrNotConfigured
 	}
-	return sess, nil
+	if cfg == nil {
+		return dto.SessionResponse{
+			Message:       util.StrPtr(ErrNotConfigured.Error()),
+			Authenticated: false,
+			Configured:    false,
+		}, nil, ErrNotConfigured
+	}
+
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(cfg.AdminPasswordHash),
+		[]byte(req.Password),
+	); err != nil {
+		return dto.SessionResponse{
+			Message:       util.StrPtr("invalid credentials"),
+			Authenticated: false,
+			Configured:    true,
+		}, nil, errors.New("invalid credentials")
+	}
+
+	expiry := time.Now().Add(time.Duration(cfg.SessionTimeoutSec) * time.Second).Unix()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"iat": time.Now().Unix(),
+		"exp": expiry,
+		"sub": "admin",
+	})
+
+	signed, err := token.SignedString([]byte(cfg.SystemSecret))
+	if err != nil {
+		msg := "could not sign token"
+		return dto.SessionResponse{
+			Message:       &msg,
+			Authenticated: false,
+			Configured:    true,
+		}, nil, errors.New("token signing failed")
+	}
+
+	cookie := &http.Cookie{
+		Name:     constants.SessionCookieName,
+		Value:    signed,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Unix(expiry, 0),
+	}
+
+	log.Printf("Setting cookie name: '%s'", constants.SessionCookieName)
+
+	return dto.SessionResponse{
+		Authenticated: true,
+		Configured:    true,
+	}, cookie, nil
 }
 
-func (s *AuthService) ValidateSession(ctx context.Context, tokenString string, systemSecret string) (bool, error) {
-	return s.validateJWT(tokenString, systemSecret)
-}
+func (a *AuthService) ValidateSession(ctx context.Context, tokenString string) (bool, error) {
+	cfg, err := a.configSvc.GetSystemConfigEntity(ctx)
+	if err != nil {
+		return false, ErrNotConfigured
+	}
+	if cfg == nil {
+		return false, ErrNotConfigured
+	}
 
-func (s *AuthService) validateJWT(tokenString string, systemSecret string) (bool, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&jwt.RegisteredClaims{},
 		func(t *jwt.Token) (interface{}, error) {
-			// ensure the signing method is HMAC
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("unexpected signing method")
 			}
-			return []byte(systemSecret), nil
+			return []byte(cfg.SystemSecret), nil
 		},
 	)
 
 	if err != nil {
-		// return false instead of error if token is expired
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return false, nil
 		}
@@ -62,8 +123,4 @@ func (s *AuthService) validateJWT(tokenString string, systemSecret string) (bool
 	}
 
 	return true, nil
-}
-
-func (a *AuthService) DeleteSession(ctx context.Context, token string) error {
-	return a.db.WithContext(ctx).Delete(&db.Session{}, "token = ?", token).Error
 }

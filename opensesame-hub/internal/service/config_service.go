@@ -1,104 +1,123 @@
+// service/config_service.go
 package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
-
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
+	"opensesame/internal/repository"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type ConfigService struct {
-	db *gorm.DB
+	repo repository.ConfigRepository
 }
 
-func NewConfigService(db *gorm.DB) *ConfigService {
-	return &ConfigService{db: db}
+func NewConfigService(repo repository.ConfigRepository) *ConfigService {
+	return &ConfigService{repo: repo}
 }
 
 func (s *ConfigService) IsSystemConfigured(ctx context.Context) (bool, error) {
-	var rows int64
-	if err := s.db.WithContext(ctx).Model(&db.SystemConfig{}).Count(&rows).Error; err != nil {
-		return false, fmt.Errorf("counting system config entries: %w", err)
+	count, err := s.repo.Count(ctx)
+	if err != nil {
+		return false, fmt.Errorf("checking system configuration: %w", err)
 	}
-	return rows > 0, nil
+	return count > 0, nil
 }
 
-// GetSystemConfig retrieves the system configuration.
-func (s *ConfigService) GetSystemConfig(ctx context.Context) (*db.SystemConfig, error) {
-	var config db.SystemConfig
-	// Assumes there's only one entry or the query implicitly selects one (e.g., by PK 1)
-	// If multiple configs can exist and you need a specific one, adjust this query.
-	if err := s.db.WithContext(ctx).First(&config).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // Return nil if no configuration exists, not an error
-		}
-		return nil, fmt.Errorf("retrieving system config: %w", err)
+func (s *ConfigService) GetSystemConfig(ctx context.Context) (*dto.ConfigResponse, error) {
+	cfg, err := s.repo.GetSystemConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting system config: %w", err)
 	}
-	return &config, nil
+	if cfg == nil {
+		return nil, nil
+	}
+
+	return s.toConfigResponse(cfg), nil
 }
 
-// CreateConfig initializes the system configuration.
+// GetSystemConfigEntity returns the full entity including sensitive fields
+// This is used internally by other services like AuthService
+func (s *ConfigService) GetSystemConfigEntity(ctx context.Context) (*db.SystemConfig, error) {
+	cfg, err := s.repo.GetSystemConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting system config entity: %w", err)
+	}
+	return cfg, nil
+}
+
 func (s *ConfigService) CreateConfig(ctx context.Context, cfg *db.SystemConfig) error {
 	configured, err := s.IsSystemConfigured(ctx)
 	if err != nil {
-		return fmt.Errorf("checking configuration status before create: %w", err)
+		return fmt.Errorf("error checking configuration status before create: %w", err)
 	}
 	if configured {
 		return ErrAlreadyConfigured
 	}
 
-	if err := s.db.WithContext(ctx).Create(cfg).Error; err != nil {
-		return fmt.Errorf("creating system config record: %w", err)
+	if err := s.repo.CreateSystemConfig(ctx, cfg); err != nil {
+		return fmt.Errorf("creating system config: %w", err)
 	}
 	return nil
 }
 
 func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateConfigPayload) (*db.SystemConfig, error) {
-	configured, err := s.IsSystemConfigured(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("checking configuration status for update: %w", err)
-	}
-	if !configured {
-		return nil, ErrNotConfigured
-	}
-
-	if payload.SystemName == nil && payload.AdminPassword == nil {
+	if payload.SystemName == nil && payload.AdminPassword == nil && payload.SessionTimeoutSec == nil {
 		return nil, ErrNoUpdateFields
 	}
 
-	currentConfig, err := s.GetSystemConfig(ctx)
+	systemConfig, err := s.repo.GetSystemConfig(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("fetching current config for update: %w", err)
+		return nil, fmt.Errorf("error fetching current config for update: %w", err)
 	}
-	if currentConfig == nil {
-		// This case should ideally be prevented by IsSystemConfigured, but acts as a safeguard.
+	if systemConfig == nil {
 		return nil, ErrNotConfigured
 	}
 
-	// 4. Apply updates to the fetched configuration object.
+	// Apply updates
+	if err := s.applyConfigUpdates(systemConfig, payload); err != nil {
+		return nil, err
+	}
+
+	if err := s.repo.UpdateSystemConfig(ctx, systemConfig); err != nil {
+		return nil, fmt.Errorf("error saving updated config: %w", err)
+	}
+
+	return systemConfig, nil
+}
+
+// Helper methods
+func (s *ConfigService) toConfigResponse(cfg *db.SystemConfig) *dto.ConfigResponse {
+	return &dto.ConfigResponse{
+		Configured:        true,
+		SystemName:        &cfg.SystemName,
+		SessionTimeoutSec: &cfg.SessionTimeoutSec,
+	}
+}
+
+func (s *ConfigService) applyConfigUpdates(config *db.SystemConfig, payload *dto.UpdateConfigPayload) error {
 	if payload.SystemName != nil {
-		currentConfig.SystemName = *payload.SystemName
+		config.SystemName = *payload.SystemName
 	}
 
 	if payload.AdminPassword != nil {
-		// Hash the new password.
 		newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(*payload.AdminPassword), bcrypt.DefaultCost)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %v", ErrPasswordHashingFailed, err)
+			return fmt.Errorf("%w: %v", ErrPasswordHashingFailed, err)
 		}
-		currentConfig.AdminPasswordHash = string(newPasswordHash)
+		config.AdminPasswordHash = string(newPasswordHash)
 	}
 
-	// 5. Save the modified configuration back to the database.
-	if err := s.db.WithContext(ctx).Save(currentConfig).Error; err != nil {
-		return nil, fmt.Errorf("saving updated config: %w", err)
+	if payload.SessionTimeoutSec != nil {
+		if *payload.SessionTimeoutSec <= 0 {
+			return fmt.Errorf("invalid session timeout: must be positive")
+		}
+		config.SessionTimeoutSec = *payload.SessionTimeoutSec
 	}
 
-	// 6. Return the updated configuration.
-	return currentConfig, nil
+	return nil
 }

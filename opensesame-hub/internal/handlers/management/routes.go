@@ -22,16 +22,15 @@ func MountRoutes(
 
 	// public routes
 	parent.HandleFunc("/management/config", GetSystemConfig(configSvc)).Methods("GET")
-	parent.HandleFunc("/management/config", PostSystemConfig(configSvc)).Methods("POST")
-	
-	parent.HandleFunc("/management/session", LoginHandler(configSvc, authSvc)).Methods("POST")
+	parent.HandleFunc("/management/config", CreateSystemConfig(configSvc)).Methods("POST")
+
+	parent.HandleFunc("/management/session", LoginHandler(authSvc)).Methods("POST")
 	parent.HandleFunc("/management/session", ValidateSessionHandler(configSvc, authSvc)).Methods("GET")
 	parent.HandleFunc("/management/session", LogoutHandler()).Methods("DELETE")
 
 	// protected routes
 	mgmt := parent.PathPrefix("/management").Subrouter()
 	mgmt.Use(middleware.MgmtSessionValidator(configSvc, authSvc))
-	mgmt.HandleFunc("/config", PatchSystemConfig(configSvc)).Methods("PATCH")
-	mgmt.HandleFunc("/access", GetAccessHandler).Methods("GET")
-	mgmt.HandleFunc("/access", PostAccessHandler).Methods("POST")
+
+	mgmt.HandleFunc("/config", UpdateSystemConfig(configSvc)).Methods("PATCH")
 }

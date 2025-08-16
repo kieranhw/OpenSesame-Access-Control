@@ -8,10 +8,9 @@ import (
 	"opensesame/internal/config"
 	"opensesame/internal/handlers/management"
 	"opensesame/internal/middleware"
-	"opensesame/internal/service"
+	"opensesame/internal/models/types"
 
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 )
 
 func Start(cfg *config.Config, handler http.Handler) error {
@@ -20,15 +19,12 @@ func Start(cfg *config.Config, handler http.Handler) error {
 	return http.ListenAndServe(addr, handler)
 }
 
-func AddHttpRoutes(db *gorm.DB) http.Handler {
+func AddHttpRoutes(svcs *types.Services) *mux.Router {
 	r := mux.NewRouter()
 	r.Use(middleware.HttpLogger)
 	r.Use(middleware.ValidateJSONBody)
 
-	configSvc := service.NewConfigService(db)
-	authSvc := service.NewAuthService(db)
-
-	management.MountRoutes(r, configSvc, authSvc)
+	management.MountRoutes(r, svcs.Config, svcs.Auth)
 
 	return r
 }
