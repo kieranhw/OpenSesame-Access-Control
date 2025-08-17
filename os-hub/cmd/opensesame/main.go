@@ -20,7 +20,7 @@ import (
 
 func main() {
 	cfg := loadAppConfig()
-	gdb := setupDatabase("app.db")
+	gdb := setupDatabase("os_data.db")
 	startApp(cfg, gdb)
 }
 
@@ -53,11 +53,11 @@ func setupDatabase(filename string) *gorm.DB {
 	}
 
 	if err := gdb.AutoMigrate(
-		&db.Entry{},
-		&db.ControlClient{},
-		&db.ControlClientEntry{},
 		&db.SystemConfig{},
-		&db.Session{},
+		&db.EntryDevice{},
+		&db.EntryCommand{},
+		&db.HttpCommand{},
+		// &db.UdpCommand{}, // not supported yet
 	); err != nil {
 		log.Fatalf("AutoMigrate failed: %v", err)
 	}
