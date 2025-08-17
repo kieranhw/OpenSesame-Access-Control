@@ -28,6 +28,8 @@ func MountManagementRoutes(parent *mux.Router, svcs *types.Services) {
 	// add protected routes to subrouter
 	mgmt := parent.PathPrefix("/management").Subrouter()
 	mgmt.Use(middleware.MgmtSessionValidator(svcs.Config, svcs.Auth))
-
 	mgmt.HandleFunc("/config", UpdateSystemConfig(svcs.Config)).Methods("PATCH")
+
+	// entry
+	mgmt.HandleFunc("/entry_devices", ListEntryDevices(svcs.Entry)).Methods("GET")
 }

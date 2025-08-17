@@ -21,7 +21,13 @@ import (
 func main() {
 	cfg := loadAppConfig()
 	gdb := setupDatabase("os_data.db")
-	startApp(cfg, gdb)
+	repos := createRepositories(gdb)
+	svcs := createServices(repos)
+	mux := httpserver.AddHTTPRoutes(svcs)
+
+	if err := httpserver.Start(cfg, mux); err != nil {
+		log.Fatalf("error starting HTTP server: %v", err)
+	}
 }
 
 func loadAppConfig() *config.Config {
@@ -68,6 +74,7 @@ func setupDatabase(filename string) *gorm.DB {
 func createRepositories(gdb *gorm.DB) *types.Repositories {
 	return &types.Repositories{
 		Config: repository.NewConfigRepository(gdb),
+		Entry:  repository.NewEntryRepository(gdb),
 	}
 }
 
@@ -75,18 +82,8 @@ func createServices(repos *types.Repositories) *types.Services {
 	configSvc := service.NewConfigService(repos.Config)
 
 	return &types.Services{
-		Config: configSvc,
 		Auth:   service.NewAuthService(configSvc),
-	}
-}
-
-func startApp(cfg *config.Config, gdb *gorm.DB) {
-	repos := createRepositories(gdb)
-	svcs := createServices(repos)
-
-	mux := httpserver.AddHTTPRoutes(svcs)
-
-	if err := httpserver.Start(cfg, mux); err != nil {
-		log.Fatalf("error starting HTTP server: %v", err)
+		Config: configSvc,
+		Entry:  service.NewEntryService(repos.Entry),
 	}
 }
