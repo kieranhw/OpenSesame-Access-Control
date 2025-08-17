@@ -52,6 +52,7 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 			return
 		}
 		if !configured {
+			w.WriteHeader(http.StatusPreconditionRequired)
 			json.NewEncoder(w).Encode(dto.ConfigResponse{Configured: false})
 			return
 		}

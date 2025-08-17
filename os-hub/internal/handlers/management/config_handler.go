@@ -18,6 +18,7 @@ func GetSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 			return
 		}
 		if !configured {
+			w.WriteHeader(http.StatusPreconditionRequired)
 			json.NewEncoder(w).Encode(dto.ConfigResponse{Configured: false})
 			return
 		}
@@ -94,8 +95,8 @@ func UpdateSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 
 		json.NewEncoder(w).Encode(dto.ConfigResponse{
 			Configured:        true,
-			SystemName:        &updatedCfg.SystemName,
-			SessionTimeoutSec: &updatedCfg.SessionTimeoutSec,
+			SystemName:        updatedCfg.SystemName,
+			SessionTimeoutSec: updatedCfg.SessionTimeoutSec,
 		})
 	}
 }

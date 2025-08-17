@@ -8,8 +8,9 @@ type ConfigResponse struct {
 }
 
 type CreateConfigRequest struct {
-	SystemName    string `json:"system_name"`
-	AdminPassword string `json:"admin_password"`
+	SystemName        string `json:"system_name"`
+	AdminPassword     string `json:"admin_password"`
+	SessionTimeoutSec int    `json:"session_timeout_sec"`
 }
 
 type UpdateConfigRequest struct {

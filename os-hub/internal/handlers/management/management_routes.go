@@ -9,7 +9,7 @@ import (
 )
 
 func MountManagementRoutes(parent *mux.Router, svcs *types.Services) {
-	// TODO: this should be hosted on :80 in production
+	// TODO: this should be changed in production to 127.0.0.1:443, where the management app is hosted
 	parent.Use(middleware.CORSMiddleware("http://localhost:3000"))
 
 	parent.PathPrefix("/management/").Methods("OPTIONS").HandlerFunc(
