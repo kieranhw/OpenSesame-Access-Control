@@ -68,54 +68,56 @@ func (s *ConfigService) CreateConfig(ctx context.Context, payload dto.CreateConf
 		return nil, fmt.Errorf("hashing admin password: %w", err)
 	}
 
-	secret := uuid.NewString()
 	backupCode := uuid.NewString()
+	backupCodeHash, err := bcrypt.GenerateFromPassword([]byte(backupCode), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("hashing backup code: %w", err)
+	}
 
 	sysCfg := &db.SystemConfig{
 		SystemName:        payload.SystemName,
-		SessionTimeoutSec: 86400,
+		SessionTimeoutSec: payload.SessionTimeoutSec,
 		AdminPasswordHash: string(adminPasswordHash),
-		SystemSecret:      secret,
-		BackupCode:        backupCode,
+		BackupCodeHash:    string(backupCodeHash),
+		SystemSecret:      uuid.NewString(),
 	}
 
 	if err := s.repo.CreateSystemConfig(ctx, sysCfg); err != nil {
 		return nil, fmt.Errorf("creating system config: %w", err)
 	}
 
-	cfgDto := &dto.ConfigResponse{
-		Configured:        true,
-		SystemName:        &sysCfg.SystemName,
+	return &dto.ConfigResponse{
+		Configured: true,
+		SystemName: &sysCfg.SystemName,
+		// include backup code once only in create response
 		BackupCode:        &backupCode,
 		SessionTimeoutSec: &sysCfg.SessionTimeoutSec,
-	}
-
-	return cfgDto, nil
+	}, nil
 }
 
-func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateConfigRequest) (*db.SystemConfig, error) {
+func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateConfigRequest) (*dto.ConfigResponse, error) {
 	if payload.SystemName == nil && payload.AdminPassword == nil && payload.SessionTimeoutSec == nil {
 		return nil, ErrNoUpdateFields
 	}
 
-	systemConfig, err := s.repo.GetSystemConfig(ctx)
+	sysCfg, err := s.repo.GetSystemConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching current config for update: %w", err)
 	}
-	if systemConfig == nil {
+	if sysCfg == nil {
 		return nil, ErrNotConfigured
 	}
 
 	// Apply updates
-	if err := s.applyConfigUpdates(systemConfig, payload); err != nil {
+	if err := s.applyConfigUpdates(sysCfg, payload); err != nil {
 		return nil, err
 	}
 
-	if err := s.repo.UpdateSystemConfig(ctx, systemConfig); err != nil {
+	if err := s.repo.UpdateSystemConfig(ctx, sysCfg); err != nil {
 		return nil, fmt.Errorf("error saving updated config: %w", err)
 	}
 
-	return systemConfig, nil
+	return s.toConfigResponse(sysCfg), nil
 }
 
 func (s *ConfigService) toConfigResponse(cfg *db.SystemConfig) *dto.ConfigResponse {
