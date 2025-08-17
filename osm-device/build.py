@@ -17,7 +17,6 @@ TARGETS = {
 }
 
 BUILD_ROOT = Path("build")
-OUTPUT_ROOT = Path("build")
 SECRETS = None
 
 def make_secrets_content(ssid: str, password: str) -> str:
@@ -46,7 +45,7 @@ def build_for_target(target_name: str, dependencies: list[str], shared_ssid: str
         shutil.copy(src, dst)
 
     # create a zip containing each dependency in the target
-    target_zip = OUTPUT_ROOT / f"{target_name}.zip"
+    target_zip = BUILD_ROOT / f"{target_name}.zip"
     if target_zip.exists():
         target_zip.unlink()
 
@@ -61,7 +60,7 @@ def build_for_target(target_name: str, dependencies: list[str], shared_ssid: str
 
 
 def main():
-    OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
+    BUILD_ROOT.mkdir(parents=True, exist_ok=True)
 
     print(f"\n{BOLD}OpenSesame Embedded Builder{RESET}")
     print(f"{BOLD}To build your files please first provide some required information.{RESET}\n")
