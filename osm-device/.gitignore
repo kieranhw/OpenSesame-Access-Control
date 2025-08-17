@@ -1,0 +1,98 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+.eggs/
+wheel/
+*.egg-info/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# pyproject / poetry / pipenv
+__pypackages__/
+*.lock
+
+# Pyright / type checker caches
+*.pyi.meta
+*.pyi.*
+
+# Unit test / coverage
+.coverage
+.pytest_cache/
+nosetests-*.log
+coverage.xml
+coverage/
+
+# Mypy
+.mypy_cache/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+ .ropeproject
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.ini
+
+# CircuitPython / MicroPython related (common patterns)
+code.py
+code.pyc
+lib/
+lib/
+*.bin
+*.hex
+*.uf2
+.fsn
+*.pyo
+
+# CircuitPython / CPython specific caches
+.cpython-*
+__pycache__/
+*.mpy
+
+# HID / device artifacts
+*.log
+
+# OS generated files
+*.swp
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Build artifacts (explicitly ignore if you want to keep builds out of repo)
+build/
+bin/
+output/
+
+# Local environment/config files
+.env
+.envrc
+.env.local
+.kitchen/
+.DS_Store

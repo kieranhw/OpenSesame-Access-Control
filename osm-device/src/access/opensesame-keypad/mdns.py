@@ -2,10 +2,19 @@ import time
 import wifi
 import mdns
 
-wifi.radio.enabled = True
-
+# Defaults (overridden if secrets.py loads)
 SSID = "ExampleSSID"
 PASSWORD = "examplepassword"
+
+try:
+    from secrets import secrets as _secrets
+    SSID = _secrets.get("ssid", SSID)
+    PASSWORD = _secrets.get("password", PASSWORD)
+except Exception:
+    # secrets.py won't exist unless running via the built output, so skip in dev
+    pass
+
+wifi.radio.enabled = True
 
 print("Connecting to Wi‑Fi...")
 try:
@@ -15,12 +24,12 @@ except Exception as e:
     while True:
         time.sleep(1)
 
-print("Connected! IP address:", wifi.radio.ipv4_address)
+print("Connected! IP address: ", wifi.radio.ipv4_address)
 
-# Set up mDNS.
+# Set up mDNS
 mdns_server = mdns.Server(wifi.radio)
 mdns_server.hostname = "opensesame-keypad"
-mdns_server.instance_name = "Opensesame Keypad"
+mdns_server.instance_name = "OpenSesame Keypad"
 mdns_server.advertise_service(service_type="_http", protocol="_tcp", port=80)
 
 print("mDNS service started. You should be able to reach it at opensesame-keypad.local")
