@@ -49,9 +49,9 @@ func (s *ConfigService) GetSystemConfigEntity(ctx context.Context) (*db.SystemCo
 	return cfg, nil
 }
 
-func (s *ConfigService) CreateConfig(ctx context.Context, payload dto.CreateConfigRequest) (*dto.ConfigResponse, error) {
-	if len(strings.TrimSpace(payload.SystemName)) <= 1 ||
-		len(strings.TrimSpace(payload.AdminPassword)) <= 1 {
+func (s *ConfigService) CreateConfig(ctx context.Context, req dto.CreateConfigRequest) (*dto.ConfigResponse, error) {
+	if len(strings.TrimSpace(req.SystemName)) <= 1 ||
+		len(strings.TrimSpace(req.AdminPassword)) <= 1 {
 		return nil, fmt.Errorf("invalid config: system name and admin password must be longer than 1 character")
 	}
 
@@ -63,7 +63,7 @@ func (s *ConfigService) CreateConfig(ctx context.Context, payload dto.CreateConf
 		return nil, ErrAlreadyConfigured
 	}
 
-	adminPasswordHash, err := bcrypt.GenerateFromPassword([]byte(payload.AdminPassword), bcrypt.DefaultCost)
+	adminPasswordHash, err := bcrypt.GenerateFromPassword([]byte(req.AdminPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("hashing admin password: %w", err)
 	}
@@ -75,8 +75,8 @@ func (s *ConfigService) CreateConfig(ctx context.Context, payload dto.CreateConf
 	}
 
 	sysCfg := &db.SystemConfig{
-		SystemName:        payload.SystemName,
-		SessionTimeoutSec: payload.SessionTimeoutSec,
+		SystemName:        req.SystemName,
+		SessionTimeoutSec: req.SessionTimeoutSec,
 		AdminPasswordHash: string(adminPasswordHash),
 		BackupCodeHash:    string(backupCodeHash),
 		SystemSecret:      uuid.NewString(),

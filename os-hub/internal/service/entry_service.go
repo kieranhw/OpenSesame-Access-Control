@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
 	"opensesame/internal/repository"
@@ -17,13 +18,13 @@ func NewEntryService(repo repository.EntryRepository) *EntryService {
 	return &EntryService{repo: repo}
 }
 
-func (s *EntryService) ListEntryDevices(ctx context.Context) ([]dto.EntryDeviceDTO, error) {
+func (s *EntryService) ListEntryDevices(ctx context.Context) ([]dto.EntryDevice, error) {
 	devices, err := s.repo.ListEntryDevices(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing entry devices: %w", err)
 	}
 
-	dtos := make([]dto.EntryDeviceDTO, len(devices))
+	dtos := make([]dto.EntryDevice, len(devices))
 	for i, d := range devices {
 		dtos[i] = s.mapEntryDeviceToDTO(d)
 	}
@@ -31,40 +32,52 @@ func (s *EntryService) ListEntryDevices(ctx context.Context) ([]dto.EntryDeviceD
 	return dtos, nil
 }
 
-func (s *EntryService) mapEntryDeviceToDTO(model *db.EntryDevice) dto.EntryDeviceDTO {
-	cmds := make([]dto.EntryCommandDTO, len(model.Commands))
+func (s *EntryService) CreateEntryDevice(ctx context.Context, req dto.CreateEntryDeviceRequest) (dto.EntryDevice, error) {
+	model := &db.EntryDevice{
+		Name:        req.Name,
+		IP:          req.IP,
+		Port:        req.Port,
+		Description: req.Description,
+	}
+
+	if err := s.repo.CreateEntryDevice(ctx, model); err != nil {
+		return dto.EntryDevice{}, fmt.Errorf("creating entry device: %w", err)
+	}
+
+	return s.mapEntryDeviceToDTO(model), nil
+}
+
+func (s *EntryService) mapEntryDeviceToDTO(model *db.EntryDevice) dto.EntryDevice {
+	cmds := make([]dto.EntryCommand, len(model.Commands))
 	for i, c := range model.Commands {
 		cmds[i] = s.mapEntryCommandToDTO(&c)
 	}
 
-	return dto.EntryDeviceDTO{
+	return dto.EntryDevice{
 		ID:          model.EntryID,
 		Name:        model.Name,
 		IP:          model.IP,
 		Port:        model.Port,
 		Description: model.Description,
-		Protocol:    string(model.Protocol),
 		CreatedAt:   model.CreatedAt,
 		UpdatedAt:   model.UpdatedAt,
 		Commands:    cmds,
 	}
 }
 
-func (s *EntryService) mapEntryCommandToDTO(model *db.EntryCommand) dto.EntryCommandDTO {
-	var httpDTO *dto.HttpCommandDTO
-	if model.HttpCommand != nil {
-		httpDTO = &dto.HttpCommandDTO{
-			URL:    model.HttpCommand.URL,
-			Method: model.HttpCommand.Method,
-			Body:   model.HttpCommand.Body,
-		}
-
-		if model.HttpCommand.Headers != "" {
-			httpDTO.Headers = parseHeaders(model.HttpCommand.Headers)
-		}
+func (s *EntryService) mapEntryCommandToDTO(model *db.EntryCommand) dto.EntryCommand {
+	// Build HTTP DTO directly from EntryCommand fields
+	httpDTO := &dto.HttpCommand{
+		URL:    model.URL,
+		Method: model.Method,
+		Body:   model.Body,
 	}
 
-	return dto.EntryCommandDTO{
+	if model.Headers != "" {
+		httpDTO.Headers = parseHeaders(model.Headers)
+	}
+
+	return dto.EntryCommand{
 		ID:        model.CommandID,
 		Type:      string(model.CommandType),
 		Status:    string(model.Status),

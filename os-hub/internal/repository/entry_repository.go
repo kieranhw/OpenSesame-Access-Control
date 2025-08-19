@@ -28,7 +28,6 @@ func (r *entryRepository) ListEntryDevices(ctx context.Context) ([]*db.EntryDevi
 	var devices []*db.EntryDevice
 	if err := r.db.WithContext(ctx).
 		Preload("Commands").
-		Preload("Commands.HttpCommand").
 		Find(&devices).Error; err != nil {
 		return nil, fmt.Errorf("listing entry devices: %w", err)
 	}
@@ -39,7 +38,6 @@ func (r *entryRepository) GetEntryDeviceById(ctx context.Context, id uint) (*db.
 	var device db.EntryDevice
 	if err := r.db.WithContext(ctx).
 		Preload("Commands").
-		Preload("Commands.HttpCommand").
 		First(&device, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

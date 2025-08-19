@@ -62,7 +62,6 @@ func setupDatabase(filename string) *gorm.DB {
 		&db.SystemConfig{},
 		&db.EntryDevice{},
 		&db.EntryCommand{},
-		&db.HttpCommand{},
 		// &db.UdpCommand{}, // not supported yet
 	); err != nil {
 		log.Fatalf("AutoMigrate failed: %v", err)
