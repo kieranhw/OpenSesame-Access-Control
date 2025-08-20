@@ -53,7 +53,6 @@ def flash_failed():
         red_led.value = False
         time.sleep(0.1)
     red_led.value = False
-    lock_state["state"] = "failed"
 
 def request_handler(method, path, body):
     if method == "POST" and path == "/lock":

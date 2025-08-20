@@ -3,7 +3,7 @@ import wifi
 class HTTPServer:
     def __init__(self, pool, port=80):
         self.server = pool.socket(pool.AF_INET, pool.SOCK_STREAM)
-        self.server.settimeout(None)  # blocking accept
+        self.server.settimeout(None)
         self.server.bind(("0.0.0.0", port))
         self.server.listen(1)
         self.port = port
