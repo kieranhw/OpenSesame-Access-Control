@@ -1,7 +1,6 @@
 This directory contains the **OpenSesame Embedded Builder** that packages device source files into  `.zip` bundles for CircuitPython devices.
 
 # Build Device Targets
--------------------
 
 ### 1\. Run the build script
 
@@ -36,7 +35,6 @@ When the build completes, you’ll find a `.zip` file in the `/build` directory:
 Unzip this file and copy its contents to your CircuitPython device (e.g. Raspberry Pi Pico W).
 
 # Creating New Device Programs
-----------------------
 
 To add a new device target:
 1.  **Create a new source directory** under `src/access/` or `src/entries`, respectively. E.g. `src/access/opensesame-doorlock/`
