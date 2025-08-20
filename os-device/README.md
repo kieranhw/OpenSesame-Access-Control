@@ -37,7 +37,7 @@ Unzip this file and copy its contents to your CircuitPython device (e.g. Raspber
 # Creating New Device Programs
 
 To add a new device target:
-1.  **Create a new source directory** under `src/access/` or `src/entries`, respectively. E.g. `src/access/opensesame-doorlock/`
+1.  **Create a new source directory** under `src/access/` or `src/entries`, respectively. E.g. `src/entries/opensesame-lock/`
 
 2.  **Each device must include:**
 
@@ -68,7 +68,7 @@ Wi-Fi SSID and password will be appended by `build.py` during the build process.
 
 3.  **Connect to the Wi-Fi and broadcast mDNS:**
 
-At the start of the program, ensure to import and call both the settings and mDNS library in order to advertise the device to the OpenSesame hub.
+At the start of the program, import and call the mDNS library to advertise the device to the OpenSesame hub.
 
 ```
 from mdns import connect_wifi, start_mdns
@@ -82,7 +82,9 @@ start_mdns(
 )
 ```
 
-4.  **Use the GPIO library to get the pins:**
+4. **Open a HTTP listener on the same port as the mDNS service.**
+
+5.  **Use the GPIO library to get the pins:**
 
 To get the GPIO pins, in both development and production, you can use it in `main.py` like this:
 
@@ -110,7 +112,7 @@ else:
     led.value = False  # turn LED off
 ```
 
-5.  **Register the new target in `build.py`:**
+6.  **Register the new target in `build.py`:**
 
 ```
 TARGETS = {
@@ -119,4 +121,4 @@ TARGETS = {
 }
 ```
 
-5.  **Build it** by running `python build.py` and selecting the new target.
+7.  **Build it** by running `python build.py` and selecting the new target.
