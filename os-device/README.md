@@ -37,7 +37,7 @@ Unzip this file and copy its contents to your CircuitPython device (e.g. Raspber
 # Creating New Device Programs
 
 To add a new device target:
-1.  **Create a new source directory** under `src/access/` or `src/entries` respectively, e.g. `src/entries/opensesame-lock/`.
+1.  **Create a new source directory** under `src/access/` or `src/entry` respectively, e.g. `src/entry/opensesame-lock/`.
 
 2.  **Each device must include:**
 

@@ -18,6 +18,7 @@ RESET = "\033[0m"
 # the name of the output zip and the value is the src directory
 TARGETS = {
     "opensesame_keypad": "src/access/opensesame-keypad",
+    "opensesame_relay_lock": "src/entry/opensesame-relay-lock",
 }
 COMMON_PATH = "src/common"
 
@@ -127,8 +128,6 @@ def build_for_target(
                 rel_path = file_path.relative_to(build_dir)
                 zipf.write(file_path, rel_path)
 
-    # delete the non-zipped directory
-    shutil.rmtree(build_dir)
     print(f"-> Built {target_name} to {target_zip}")
 
 def main():
@@ -175,6 +174,10 @@ def main():
     if gpio_defaults:
         for section in ["input", "output"]:
             if section in gpio_defaults:
+                if not gpio_defaults[section]:
+                    # no gpio for this section, skip
+                    continue
+                
                 print(f"\nConfigure {section.upper()} pins:")
                 for key, default_val in gpio_defaults[section].items():
                     new_val = input(f"{key} (default {default_val}): ").strip()
