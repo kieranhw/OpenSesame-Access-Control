@@ -73,7 +73,7 @@ def override_gpio_pins(gpio_file: Path, overrides: dict):
 
     # Rewrite gpio.py
     with open(gpio_file, "w", encoding="utf-8") as f:
-        f.write("# gpio.py\n# Auto-generated with user overrides\n\ngpio = {\n")
+        f.write("# Auto-generated with user overrides\n\ngpio = {\n")
         for section, pins in gpio.items():
             f.write(f'    "{section}": {{\n')
             for key, val in pins.items():
@@ -102,17 +102,17 @@ def build_for_target(
         copy_all_files(Path(common_dir), build_dir)
 
     # ensure settings.py exists
-    settings_file = build_dir / "settings.py"
+    settings_file = build_dir / "os_settings.py"
     if not settings_file.exists():
         raise FileNotFoundError(
-            f"Target {target_name} is missing a settings.py file in {src_dir}"
+            f"Target {target_name} is missing a os_settings.py file in {src_dir}"
         )
 
     # append Wi-Fi settings
     append_wifi_settings(settings_file, ssid, password)
 
     # apply GPIO overrides
-    gpio_file = build_dir / "gpio.py"
+    gpio_file = build_dir / "os_gpio.py"
     if gpio_file.exists():
         override_gpio_pins(gpio_file, gpio_overrides)
 
@@ -167,7 +167,7 @@ def main():
 
     # GPIO overrides
     print(f"\n{BOLD}Step 3: Configure GPIO pins{RESET}")
-    gpio_file = Path(src_dir) / "gpio.py"
+    gpio_file = Path(src_dir) / "os_gpio.py"
     gpio_defaults = parse_gpio_file(gpio_file)
     gpio_overrides = {"input": {}, "output": {}}
 
@@ -192,7 +192,7 @@ def main():
     build_for_target(target_name, src_dir, COMMON_PATH, ssid, password, gpio_overrides)
 
     print(
-        f"\n{BOLD}{GREEN}Build complete! You may now load the zip from /build to your device.{RESET}\n"
+        f"\n{BOLD}{GREEN}Build complete! You may now load the module from /build to your device.{RESET}\n"
     )
 
 if __name__ == "__main__":

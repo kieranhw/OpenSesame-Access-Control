@@ -42,7 +42,7 @@ To add a new device target:
 2.  **Each device must include:**
 
 * A `main.py` entrypoint file.
-* A `settings.py` file with at least the following structure:
+* A `os_settings.py` file with at least the following structure:
 ```
 settings = {
 	"hostname": "opensesame-keypad", # mDNS hostname
@@ -51,7 +51,7 @@ settings = {
 }
 ```
 
-* An optional `gpio.py` file which specifies pins that the user can override based on their wiring. This can contain development defaults, but will be overridden in the build output.
+* An optional `os_gpio.py` file which specifies pins that the user can override based on their wiring. This can contain development defaults, but will be overridden in the build output.
 
 ```
 gpio = {
@@ -71,8 +71,8 @@ Wi-Fi SSID and password will be appended by `build.py` during the build process.
 At the start of the program, import and call the mDNS library to advertise the device to the OpenSesame hub.
 
 ```
-from mdns import connect_wifi, start_mdns
-from settings import settings
+from os_mdns import connect_wifi, start_mdns
+from os_settings import settings
 
 connect_wifi(settings["ssid"], settings["password"])
 start_mdns(
@@ -91,7 +91,7 @@ To get the GPIO pins, in both development and production, you can use it in `mai
 ```python
 import board
 import digitalio
-from gpio import gpio
+from os_gpio import gpio
 
 # Map GPIO numbers into variables
 SENSOR_GPIO = gpio["input"]["SENSOR"]
