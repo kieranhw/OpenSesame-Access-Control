@@ -18,10 +18,7 @@ Step 1: Select a target to build
 [1] opensesame_keypad
 ```
   
-Enter the number of the target you want to build, then you will be prompted with the input steps.
-
-* * *
-  
+Enter the number of the target you want to build, then you will be prompted with the input steps.  
 
 ### 2\. Enter Wi-Fi credentials
 
@@ -30,7 +27,6 @@ The script will prompt you for:
 *  **Wi-Fi password**
 
 These values will be appended to the target’s `settings.py` file automatically.
-* * *
 
 ### 3\. Output
 
