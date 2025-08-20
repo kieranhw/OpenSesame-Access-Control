@@ -12,37 +12,39 @@ from os_http_server import HTTPServer
 def setup_output(pin_number):
     pin = digitalio.DigitalInOut(getattr(board, "GP{}".format(pin_number)))
     pin.direction = digitalio.Direction.OUTPUT
-    pin.value = False
+    pin.value = False # default to low
     return pin
 
 red_led = setup_output(gpio["output"]["red_led"])
 yellow_led = setup_output(gpio["output"]["yellow_led"])
 green_led = setup_output(gpio["output"]["green_led"])
+lock_relay = setup_output(gpio["output"]["lock_relay"])
 
-lock_state = {"state": "unknown"}
-
-# --- Connect Wi-Fi ---
 connect_wifi(settings["ssid"], settings["password"])
 start_mdns(
     hostname=settings["hostname"],
     instance=settings["instance_name"],
     port=settings["port"]
 )
-
 pool = socketpool.SocketPool(wifi.radio)
 
-# --- Helper functions ---
+lock_state = {"state": "unknown"}
+
 def set_locked():
-    green_led.value = False
-    yellow_led.value = True
+    yellow_led.value = False
     red_led.value = False
+    green_led.value = True
+    
     lock_state["state"] = "locked"
+    lock_relay.value = True
 
 def set_unlocked():
-    yellow_led.value = False
-    green_led.value = True
     red_led.value = False
+    green_led.value = False
+    yellow_led.value = True
+    
     lock_state["state"] = "unlocked"
+    lock_relay.value = False
 
 def flash_failed():
     for _ in range(10):  # 10 flashes
@@ -53,7 +55,6 @@ def flash_failed():
     red_led.value = False
     lock_state["state"] = "failed"
 
-# --- Request handler ---
 def request_handler(method, path, body):
     if method == "POST" and path == "/lock":
         set_locked()
@@ -73,7 +74,6 @@ def request_handler(method, path, body):
     else:
         return ("404 Not Found", "text/plain", "Not found")
 
-# --- Start HTTP server ---
 server = HTTPServer(pool, settings["port"])
 try:
     server.serve_forever(request_handler)
