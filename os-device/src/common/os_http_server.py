@@ -10,7 +10,7 @@ class HTTPServer:
         self.ip = str(wifi.radio.ipv4_address)
         print("HTTP server running at http://{}:{}".format(self.ip, self.port))
 
-    def send_response(self, conn, body, status="200 OK", content_type="text/plain"):
+    def write_response(self, conn, body, status="200 OK", content_type="text/plain"):
         response = (
             "HTTP/1.1 {}\r\n"
             "Content-Type: {}\r\n"
@@ -64,18 +64,27 @@ class HTTPServer:
                 if "\r\n\r\n" in request:
                     body = request.split("\r\n\r\n", 1)[1]
 
-                # Call user handler
+                # Call user handler with server + conn
                 try:
-                    status, content_type, response_body = handler(method, path, body)
+                    result = handler(self, conn, method, path, body)
+                    if result is not None:
+                        status, content_type, response_body = result
+                        self.write_response(
+                            conn,
+                            response_body,
+                            status=status,
+                            content_type=content_type,
+                        )
+                    else:
+                        pass
                 except Exception as e:
                     print("Handler error:", e)
-                    status, content_type, response_body = (
-                        "500 Internal Server Error",
-                        "text/plain",
+                    self.write_response(
+                        conn,
                         "Server error: {}".format(e),
+                        status="500 Internal Server Error",
+                        content_type="text/plain",
                     )
-
-                self.send_response(conn, response_body, status=status, content_type=content_type)
 
         finally:
             self.close()
