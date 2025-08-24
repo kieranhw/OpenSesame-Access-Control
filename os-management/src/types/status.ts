@@ -18,6 +18,7 @@ export interface AccessDevice {
 }
 
 export interface StatusResponse {
+  etag: number;
   system_name: string;
   entry_devices: EntryDevice[];
   discovered_devices: DiscoveredDevice[];
