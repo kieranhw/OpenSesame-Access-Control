@@ -31,20 +31,21 @@ func (r *discoveredDeviceRepository) Upsert(ctx context.Context, device *db.Disc
 	if err == gorm.ErrRecordNotFound {
 		device.CreatedAt = time.Now()
 		device.UpdatedAt = time.Now()
+		// device is newly discovered, so insert and return
 		return r.db.WithContext(ctx).Create(device).Error
 	} else if err != nil {
 		return err
 	}
 
-	// Update existing
+	// device already exists so update
 	existing.Hostname = device.Hostname
 	existing.Instance = device.Instance
+	existing.DeviceType = device.DeviceType
 	existing.IPv4 = device.IPv4
 	existing.Port = device.Port
 	existing.ServiceType = device.ServiceType
 	existing.LastSeen = time.Now()
 	existing.UpdatedAt = time.Now()
-
 	return r.db.WithContext(ctx).Save(&existing).Error
 }
 
