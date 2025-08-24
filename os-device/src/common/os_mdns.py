@@ -16,7 +16,6 @@ try:
     from os_settings import settings as _settings
     SSID = _settings.get("ssid", SSID)
     PASSWORD = _settings.get("password", PASSWORD)
-    HOSTNAME = _settings.get("hostname", HOSTNAME)
     INSTANCE_NAME = _settings.get("instance_name", INSTANCE_NAME)
     PORT = _settings.get("port", PORT)
 except Exception:
@@ -45,10 +44,10 @@ def connect_wifi(ssid, password, retries=3):
 
     raise ConnectionError("Failed to connect to Wi‑Fi after {} retries".format(retries))
 
-def start_mdns(hostname="opensesame-device", instance="OpenSesame Device", port=80):
+def start_mdns(instance="OpenSesame Device", port=80):
     server = mdns.Server(wifi.radio)
-    server.hostname = hostname
+    server.hostname = HOSTNAME
     server.instance_name = instance
     server.advertise_service(service_type="_http", protocol="_tcp", port=port)
-    print(f"mDNS started: {hostname}.local → {instance} on port {port}")
+    print(f"mDNS started: {HOSTNAME}.local → {instance} on port {port}")
     return server

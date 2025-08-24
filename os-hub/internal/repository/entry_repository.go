@@ -47,7 +47,6 @@ func (r *entryRepository) GetEntryDeviceById(ctx context.Context, id uint) (*db.
 	return &device, nil
 }
 
-// CreateEntryDevice inserts a new entry device
 func (r *entryRepository) CreateEntryDevice(ctx context.Context, entry *db.EntryDevice) error {
 	if err := r.db.WithContext(ctx).Create(entry).Error; err != nil {
 		return fmt.Errorf("creating entry device: %w", err)

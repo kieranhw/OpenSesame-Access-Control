@@ -19,7 +19,7 @@ type EntryCommandDTO struct {
 	Status    string          `json:"status,omitempty"`
 	CreatedAt time.Time       `json:"created_at"`
 	Http      *HttpCommandDTO `json:"http,omitempty"`
-	// Udp      *UdpCommandDTO  `json:"udp,omitempty"` // future extension
+	// Udp      *UdpCommandDTO  `json:"udp,omitempty"` // TODO: future extension
 }
 
 type HttpCommandDTO struct {

@@ -144,7 +144,7 @@ def main():
 |____/ \__,_|_|_|\__,_|\___|_|                                                                                                                                                                                                                             
           ''')
 
-    print(f"\n{BOLD}OpenSesame Embedded Builder{RESET}\n")
+    print(f"{BOLD}OpenSesame Embedded Builder{RESET}\n")
     print(f"{BOLD}Step 1: Select a target to build{RESET}\n")
     targets = list(TARGETS.keys())
     for i, t in enumerate(targets, start=1):

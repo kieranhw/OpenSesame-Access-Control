@@ -1,4 +1,3 @@
-# gpio.py
 gpio = {
     "input": {
         # no inputs for this device

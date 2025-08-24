@@ -1,5 +1,5 @@
 settings = {
-    "hostname": "opensesame-relay-lock",
     "instance_name": "OpenSesame Relay Lock", 
+    "type": "entry",
     "port": 80 
 }
