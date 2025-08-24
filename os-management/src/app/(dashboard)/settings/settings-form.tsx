@@ -187,7 +187,7 @@ export function SettingsForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-        <div className="mb-6 space-y-8 border-b pb-8">
+        <div className="mb-6 space-y-8 border-b pb-8 px-6">
           <FormField
             control={form.control}
             name="systemName"
@@ -327,7 +327,7 @@ export function SettingsForm() {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-4">
+        <div className="flex items-center justify-end gap-4 px-6">
           <p className="text-destructive text-sm">{fetchError}</p>
           <Button
             type="submit"
