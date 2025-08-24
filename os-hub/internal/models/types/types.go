@@ -16,4 +16,5 @@ type Services struct {
 	Auth      *service.AuthService
 	Entry     *service.EntryService
 	Discovery *service.DiscoveryService
+	Status    *service.StatusService
 }

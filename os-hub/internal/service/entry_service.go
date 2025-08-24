@@ -19,7 +19,7 @@ func NewEntryService(repo repository.EntryRepository) *EntryService {
 }
 
 func (s *EntryService) ListEntryDevices(ctx context.Context) ([]dto.EntryDevice, error) {
-	devices, err := s.repo.ListEntryDevices(ctx)
+	devices, err := s.repo.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing entry devices: %w", err)
 	}

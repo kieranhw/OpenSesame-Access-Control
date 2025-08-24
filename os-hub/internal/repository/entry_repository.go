@@ -11,7 +11,7 @@ import (
 )
 
 type EntryRepository interface {
-	ListEntryDevices(ctx context.Context) ([]*db.EntryDevice, error)
+	List(ctx context.Context) ([]*db.EntryDevice, error)
 	GetEntryDeviceById(ctx context.Context, id uint) (*db.EntryDevice, error)
 	CreateEntryDevice(ctx context.Context, entry *db.EntryDevice) error
 }
@@ -24,7 +24,7 @@ func NewEntryRepository(db *gorm.DB) EntryRepository {
 	return &entryRepository{db: db}
 }
 
-func (r *entryRepository) ListEntryDevices(ctx context.Context) ([]*db.EntryDevice, error) {
+func (r *entryRepository) List(ctx context.Context) ([]*db.EntryDevice, error) {
 	var devices []*db.EntryDevice
 	if err := r.db.WithContext(ctx).
 		Preload("Commands").
