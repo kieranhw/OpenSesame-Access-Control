@@ -1,23 +1,11 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import {
-  DoorClosedLocked,
-  FileLock2,
-  House,
-  KeyRound,
-  MonitorSmartphone,
-  Settings
-} from "lucide-react"
+import * as React from "react";
+import { DoorClosedLocked, FileLock2, House, KeyRound, Microchip, MonitorSmartphone, Settings } from "lucide-react";
 
-import { NavMain } from "@/components/sidebar/nav-main"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarRail,
-} from "@/components/ui/sidebar"
-import { AppRoute } from "@/lib/app-routes"
+import { NavMain } from "@/components/sidebar/nav-main";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
+import { AppRoute } from "@/lib/app-routes";
 
 const sidebarItems = [
   {
@@ -26,19 +14,25 @@ const sidebarItems = [
     icon: House,
   },
   {
-    title: "Entry Devices",
-    url: AppRoute.ENTRY_DEVICES,
-    icon: DoorClosedLocked,
-  },
-  {
-    title: "Access Devices",
-    url: AppRoute.ACCESS,
-    icon: KeyRound,
+    title: "Device Management",
+    icon: Microchip,
+    items: [
+      {
+        title: "Entry Devices",
+        url: AppRoute.ENTRY_DEVICES,
+        icon: DoorClosedLocked,
+      },
+      {
+        title: "Access Devices",
+        url: AppRoute.ACCESS,
+        icon: KeyRound,
+      },
+    ],
   },
   {
     title: "Credentials",
     url: AppRoute.CREDENTIALS,
-    icon: FileLock2
+    icon: FileLock2,
   },
   {
     title: "Clients",
@@ -52,16 +46,14 @@ const sidebarItems = [
   },
 ];
 
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props} >
+    <Sidebar collapsible="icon" {...props}>
       <SidebarContent className="pt-12">
         <NavMain items={sidebarItems} />
       </SidebarContent>
-      <SidebarFooter>
-      </SidebarFooter>
+      <SidebarFooter></SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

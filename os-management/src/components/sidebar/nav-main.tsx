@@ -1,7 +1,11 @@
 "use client";
 
 import { ChevronRight, type LucideIcon } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -14,12 +18,19 @@ import {
 import { JSX } from "react";
 import Link from "next/link";
 
-export interface NavItem {
+export interface NavSubItem {
   title: string;
   url: string;
   icon?: LucideIcon;
   isActive?: boolean;
-  items?: { title: string; url: string }[];
+}
+
+export interface NavItem {
+  title: string;
+  url?: string; // optional when it’s a collapsible group
+  icon?: LucideIcon;
+  isActive?: boolean; // controls defaultOpen for groups
+  items?: NavSubItem[];
 }
 
 export function NavMain({ items }: { items: NavItem[] }): JSX.Element {
@@ -31,14 +42,18 @@ export function NavMain({ items }: { items: NavItem[] }): JSX.Element {
             <CollapsibleSidebarItem key={item.title} {...item} />
           ) : (
             <SidebarItem key={item.title} {...item} />
-          ),
+          )
         )}
       </SidebarMenu>
     </SidebarGroup>
   );
 }
 
-export function SidebarItem({ title, url, icon: Icon }: NavItem): JSX.Element {
+export function SidebarItem({
+  title,
+  url = "#",
+  icon: Icon,
+}: NavItem): JSX.Element {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild tooltip={title}>
@@ -51,9 +66,14 @@ export function SidebarItem({ title, url, icon: Icon }: NavItem): JSX.Element {
   );
 }
 
-export function CollapsibleSidebarItem({ title, icon: Icon, items, isActive }: NavItem): JSX.Element {
+export function CollapsibleSidebarItem({
+  title,
+  icon: Icon,
+  items = [],
+  isActive,
+}: NavItem): JSX.Element {
   return (
-    <Collapsible asChild defaultOpen={isActive} className="group/collapsible">
+    <Collapsible asChild defaultOpen={!!isActive} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip={title}>
@@ -64,15 +84,19 @@ export function CollapsibleSidebarItem({ title, icon: Icon, items, isActive }: N
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub>
-            {items?.map((subItem) => (
-              <SidebarMenuSubItem key={subItem.title}>
-                <SidebarMenuSubButton asChild>
-                  <a href={subItem.url}>
-                    <span>{subItem.title}</span>
-                  </a>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            ))}
+            {items.map((subItem) => {
+              const SubIcon = subItem.icon;
+              return (
+                <SidebarMenuSubItem key={subItem.title}>
+                  <SidebarMenuSubButton asChild>
+                    <Link href={subItem.url} draggable={false}>
+                      {SubIcon && <SubIcon className="size-4" />}
+                      <span>{subItem.title}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
           </SidebarMenuSub>
         </CollapsibleContent>
       </SidebarMenuItem>
