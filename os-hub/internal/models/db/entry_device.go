@@ -2,9 +2,6 @@ package db
 
 import "time"
 
-// --------------------
-// EntryDevice (Parent)
-// --------------------
 type EntryDevice struct {
 	EntryID     uint   `gorm:"primaryKey;autoIncrement"`
 	Name        string `gorm:"not null"`
@@ -18,9 +15,6 @@ type EntryDevice struct {
 	Commands []EntryCommand `gorm:"foreignKey:EntryID;references:EntryID;constraint:OnDelete:CASCADE"`
 }
 
-// --------------------
-// EntryCommand (Child)
-// --------------------
 type CommandType string
 
 const (
@@ -45,7 +39,7 @@ type EntryCommand struct {
 	CreatedAt   time.Time     `gorm:"autoCreateTime"`
 	Status      CommandStatus `gorm:"type:varchar(20)"`
 
-	// HTTP fields (inlined)
+	// HTTP fields
 	URL     string `gorm:"not null"`
 	Method  string `gorm:"not null"`
 	Headers string

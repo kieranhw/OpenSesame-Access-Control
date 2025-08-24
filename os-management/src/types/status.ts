@@ -1,0 +1,25 @@
+export interface EntryDevice {
+  id: number;
+  ip_address: string;
+}
+
+export interface DiscoveredDevice {
+  id: number;
+  instance: string;
+  ip_address: string;
+  mac_address: string;
+  type?: string;
+  last_seen?: number;
+}
+
+export interface AccessDevice {
+  id: number;
+  name: string;
+}
+
+export interface StatusResponse {
+  system_name: string;
+  entry_devices: EntryDevice[];
+  discovery: DiscoveredDevice[];
+  //   access_devices: AccessDevice[];
+}

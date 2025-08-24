@@ -31,7 +31,7 @@ func NewStatusService(
 func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, error) {
 	var (
 		cfg                 *db.SystemConfig
-		entrySummaries      []dto.EntryStatus
+		entrySummaries      []dto.EntryDevice
 		discoveredSummaries []dto.DiscoveryStatus
 	)
 
@@ -49,15 +49,19 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 
 	// Entry devices
 	g.Go(func() error {
-		entryDevices, err := s.entryRepo.List(ctx)
+		devices, err := s.entryRepo.List(ctx)
 		if err != nil {
 			return err
 		}
-		summaries := make([]dto.EntryStatus, 0, len(entryDevices))
-		for _, e := range entryDevices {
-			summaries = append(summaries, dto.EntryStatus{
-				ID:        e.EntryID,
-				IPAddress: e.IP,
+		summaries := make([]dto.EntryDevice, 0, len(devices))
+		for _, d := range devices {
+			summaries = append(summaries, dto.EntryDevice{
+				ID:          d.EntryID,
+				IP:          d.IP,
+				Port:        d.Port,
+				Name:        d.Name,
+				Description: d.Description,
+				CreatedAt:   d.CreatedAt,
 			})
 		}
 		entrySummaries = summaries
