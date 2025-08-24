@@ -20,6 +20,6 @@ export interface AccessDevice {
 export interface StatusResponse {
   system_name: string;
   entry_devices: EntryDevice[];
-  discovery: DiscoveredDevice[];
+  discovered_devices: DiscoveredDevice[];
   //   access_devices: AccessDevice[];
 }

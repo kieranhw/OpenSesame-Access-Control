@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"opensesame/internal/etag"
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
 	"opensesame/internal/repository"
@@ -86,6 +87,7 @@ func (s *ConfigService) CreateConfig(ctx context.Context, req dto.CreateConfigRe
 		return nil, fmt.Errorf("creating system config: %w", err)
 	}
 
+	etag.Bump()
 	return &dto.ConfigResponse{
 		Configured: true,
 		SystemName: &sysCfg.SystemName,
@@ -117,6 +119,7 @@ func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateCon
 		return nil, fmt.Errorf("error saving updated config: %w", err)
 	}
 
+	etag.Bump()
 	return s.toConfigResponse(sysCfg), nil
 }
 

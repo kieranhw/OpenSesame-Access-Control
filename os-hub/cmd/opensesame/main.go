@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"opensesame/internal/config"
+	"opensesame/internal/etag"
 	"opensesame/internal/httpserver"
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/types"
@@ -25,6 +26,8 @@ func main() {
 	gdb := setupDatabase("os_data.db")
 	repos := createRepositories(gdb)
 	svcs := createServices(repos)
+
+	etag.Init()
 
 	// Start discovery service in background
 	if err := svcs.Discovery.Start(context.Background()); err != nil {
@@ -63,13 +66,12 @@ func setupDatabase(filename string) *gorm.DB {
 
 	dsn := fmt.Sprintf("%s?_foreign_keys=1", dbFile)
 
-	// Configure GORM logger
 	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
-			SlowThreshold:             time.Second, // log slow queries
-			LogLevel:                  logger.Warn, // log only warnings or errors
-			IgnoreRecordNotFoundError: true,        // 👈 don't log ErrRecordNotFound
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Warn,
+			IgnoreRecordNotFoundError: true,
 			Colorful:                  true,
 		},
 	)

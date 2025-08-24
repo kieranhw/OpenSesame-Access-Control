@@ -9,7 +9,6 @@ interface StatusContextType {
   accessDevices: AccessDevice[];
   loading: boolean;
   error: string | null;
-  refresh: () => void;
 }
 
 const StatusContext = createContext<StatusContextType | undefined>(undefined);
@@ -35,7 +34,7 @@ export const StatusProvider = ({ children }: { children: ReactNode }) => {
       // Split into individual state slices
       setSystemName(data.system_name);
       setEntryDevices(data.entry_devices || []);
-      setDiscoveredDevices(data.discovery || []);
+      setDiscoveredDevices(data.discovered_devices || []);
     //   setAccessDevices(data.access_devices || []);
       setError(null);
     } catch (err: any) {
@@ -61,7 +60,6 @@ export const StatusProvider = ({ children }: { children: ReactNode }) => {
         accessDevices,
         loading,
         error,
-        refresh: fetchStatus,
       }}
     >
       {children}

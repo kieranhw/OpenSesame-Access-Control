@@ -1,7 +1,8 @@
 package dto
 
 type StatusResponse struct {
-	SystemName        *string           `json:"system_name,omitempty"`
+	ETag              uint64            `json:"etag"`
+	SystemName        string            `json:"system_name"`
 	EntryDevices      []EntryDevice     `json:"entry_devices"`
 	DiscoveredDevices []DiscoveryStatus `json:"discovered_devices"`
 	// AccessDevices     []AccessStatus    `json:"access_devices"`

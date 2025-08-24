@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"opensesame/internal/etag"
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
 	"opensesame/internal/repository"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -13,7 +15,7 @@ type StatusService struct {
 	configRepo           repository.ConfigRepository
 	entryRepo            repository.EntryRepository
 	discoveredDeviceRepo repository.DiscoveredDeviceRepository
-	// accessRepo repository.AccessRepository // if/when you add it
+	// accessRepo repository.AccessRepository
 }
 
 func NewStatusService(
@@ -28,6 +30,34 @@ func NewStatusService(
 	}
 }
 
+func (s *StatusService) WaitForStatus(
+	ctx context.Context,
+	clientETag uint64,
+	timeout time.Duration,
+) (*dto.StatusResponse, uint64, bool, error) {
+	// if no etag or no timeout, return immediately
+	if clientETag == 0 || timeout == 0 {
+		status, err := s.GetStatus(ctx)
+		if err != nil {
+			return nil, etag.Current(), false, err
+		}
+		return status, etag.Current(), true, nil
+	}
+
+	// otherwise, do the long-poll wait
+	changed := etag.Wait(clientETag, timeout)
+	if !changed {
+		return nil, etag.Current(), false, nil
+	}
+
+	status, err := s.GetStatus(ctx)
+	if err != nil {
+		return nil, etag.Current(), false, err
+	}
+
+	return status, etag.Current(), true, nil
+}
+
 func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, error) {
 	var (
 		cfg                 *db.SystemConfig
@@ -37,7 +67,7 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	// System config
+	// system config
 	g.Go(func() error {
 		c, err := s.configRepo.GetSystemConfig(ctx)
 		if err != nil {
@@ -47,7 +77,7 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 		return nil
 	})
 
-	// Entry devices
+	// entry devices
 	g.Go(func() error {
 		devices, err := s.entryRepo.List(ctx)
 		if err != nil {
@@ -62,13 +92,14 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 				Name:        d.Name,
 				Description: d.Description,
 				CreatedAt:   d.CreatedAt,
+				UpdatedAt:   d.UpdatedAt,
 			})
 		}
 		entrySummaries = summaries
 		return nil
 	})
 
-	// Discovered devices
+	// discovered devices
 	g.Go(func() error {
 		discovered, err := s.discoveredDeviceRepo.List(ctx)
 		if err != nil {
@@ -95,11 +126,12 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 	}
 
 	resp := &dto.StatusResponse{
+		ETag:              etag.Current(),
 		EntryDevices:      entrySummaries,
 		DiscoveredDevices: discoveredSummaries,
 	}
 	if cfg != nil {
-		resp.SystemName = &cfg.SystemName
+		resp.SystemName = cfg.SystemName
 	}
 
 	return resp, nil
