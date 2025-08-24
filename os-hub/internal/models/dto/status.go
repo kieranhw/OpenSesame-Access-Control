@@ -2,9 +2,8 @@ package dto
 
 type StatusResponse struct {
 	SystemName        *string           `json:"system_name,omitempty"`
-	Configured        bool              `json:"configured"`
 	EntryDevices      []EntryStatus     `json:"entry_devices"`
-	DiscoveredDevices []DiscoveryStatus `json:"discovered_devices"`
+	DiscoveredDevices []DiscoveryStatus `json:"discovery"`
 	// AccessDevices     []AccessStatus    `json:"access_devices"`
 }
 
@@ -19,4 +18,5 @@ type DiscoveryStatus struct {
 	MacAddress string `json:"mac_address"`
 	Instance   string `json:"instance"`
 	DeviceType string `json:"type"`
+	LastSeen   int64  `json:"last_seen"`
 }

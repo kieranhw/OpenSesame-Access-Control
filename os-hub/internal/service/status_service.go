@@ -2,8 +2,11 @@ package service
 
 import (
 	"context"
+	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
 	"opensesame/internal/repository"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type StatusService struct {
@@ -26,46 +29,70 @@ func NewStatusService(
 }
 
 func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, error) {
+	var (
+		cfg                 *db.SystemConfig
+		entrySummaries      []dto.EntryStatus
+		discoveredSummaries []dto.DiscoveryStatus
+	)
+
+	g, ctx := errgroup.WithContext(ctx)
+
 	// System config
-	cfg, err := s.configRepo.GetSystemConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
+	g.Go(func() error {
+		c, err := s.configRepo.GetSystemConfig(ctx)
+		if err != nil {
+			return err
+		}
+		cfg = c
+		return nil
+	})
 
 	// Entry devices
-	entryDevices, err := s.entryRepo.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-	entrySummaries := make([]dto.EntryStatus, 0, len(entryDevices))
-	for _, e := range entryDevices {
-		entrySummaries = append(entrySummaries, dto.EntryStatus{
-			ID:        e.EntryID,
-			IPAddress: e.IP,
-		})
-	}
+	g.Go(func() error {
+		entryDevices, err := s.entryRepo.List(ctx)
+		if err != nil {
+			return err
+		}
+		summaries := make([]dto.EntryStatus, 0, len(entryDevices))
+		for _, e := range entryDevices {
+			summaries = append(summaries, dto.EntryStatus{
+				ID:        e.EntryID,
+				IPAddress: e.IP,
+			})
+		}
+		entrySummaries = summaries
+		return nil
+	})
 
 	// Discovered devices
-	discovered, err := s.discoveredDeviceRepo.List(ctx)
-	if err != nil {
+	g.Go(func() error {
+		discovered, err := s.discoveredDeviceRepo.List(ctx)
+		if err != nil {
+			return err
+		}
+		summaries := make([]dto.DiscoveryStatus, 0, len(discovered))
+		for _, d := range discovered {
+			summaries = append(summaries, dto.DiscoveryStatus{
+				ID:         d.ID,
+				MacAddress: d.MacAddress,
+				Instance:   d.Instance,
+				IPAddress:  d.IPv4,
+				DeviceType: d.DeviceType,
+				LastSeen:   d.LastSeen.Unix(),
+			})
+		}
+		discoveredSummaries = summaries
+		return nil
+	})
+
+	// wait for goroutines
+	if err := g.Wait(); err != nil {
 		return nil, err
-	}
-	discoveredSummaries := make([]dto.DiscoveryStatus, 0, len(discovered))
-	for _, d := range discovered {
-		discoveredSummaries = append(discoveredSummaries, dto.DiscoveryStatus{
-			ID:         d.ID,
-			MacAddress: d.MacAddress,
-			Instance:   d.Instance,
-			IPAddress:  d.IPv4,
-			DeviceType: d.DeviceType,
-		})
 	}
 
 	resp := &dto.StatusResponse{
-		Configured:        cfg != nil,
 		EntryDevices:      entrySummaries,
 		DiscoveredDevices: discoveredSummaries,
-		// AccessDevices:     accessSummaries,
 	}
 	if cfg != nil {
 		resp.SystemName = &cfg.SystemName

@@ -2,16 +2,14 @@ import wifi
 import mdns
 import time
 
-# wi-fi credentials
-SSID = "ExampleSSID"
-PASSWORD = "examplepassword"
-
-# mdns
+# constants
 HOSTNAME = "opensesame-device"
-INSTANCE_NAME = "OpenSesame Device"
-PORT = 80
 
 # overwrite defaults if settings exists
+SSID = "ExampleSSID"
+PASSWORD = "examplepassword"
+INSTANCE_NAME = "OpenSesame Device" 
+PORT = 80
 try:
     from os_settings import settings as _settings
     SSID = _settings.get("ssid", SSID)
@@ -22,7 +20,7 @@ except Exception:
     # secrets.py won't exist unless running via the built output, so skip in dev
     pass
 
-def connect_wifi(ssid, password, retries=3):
+def connect_wifi(retries=3):
     # Reset radio
     wifi.radio.enabled = False
     time.sleep(0.5)
@@ -35,7 +33,7 @@ def connect_wifi(ssid, password, retries=3):
                 wifi.radio.disconnect()
             except Exception:
                 pass
-            wifi.radio.connect(ssid, password)
+            wifi.radio.connect(SSID, PASSWORD)
             print("Connected! IP address:", wifi.radio.ipv4_address)
             return
         except Exception as e:
@@ -44,7 +42,7 @@ def connect_wifi(ssid, password, retries=3):
 
     raise ConnectionError("Failed to connect to Wi‑Fi after {} retries".format(retries))
 
-def start_mdns(instance="OpenSesame Device", port=80):
+def start_mdns(instance=INSTANCE_NAME, port=PORT):
     server = mdns.Server(wifi.radio)
     server.hostname = HOSTNAME
     server.instance_name = instance
