@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { DataTableDemo } from "./entry-table";
 import { SectionCard } from "@/components/section-card";
 import { DeviceDiscoveryCard } from "@/components/device-discovery-card";
+import { EntryDataTable } from "./entry-data-table";
 
 async function EntryDevicesPage() {
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 p-4">
       <DeviceDiscoveryCard />
@@ -15,7 +16,7 @@ async function EntryDevicesPage() {
         bodyPadding={false}
       >
         <div className="border-t">
-          <DataTableDemo />
+          <EntryDataTable />
         </div>
       </SectionCard>
     </div>
