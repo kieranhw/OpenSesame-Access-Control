@@ -107,12 +107,13 @@ func createRepositories(gdb *gorm.DB) *types.Repositories {
 
 func createServices(repos *types.Repositories) *types.Services {
 	configSvc := service.NewConfigService(repos.Config)
+	entrySvc := service.NewEntryService(repos.Entry)
 
 	return &types.Services{
 		Auth:      service.NewAuthService(configSvc),
 		Config:    configSvc,
-		Entry:     service.NewEntryService(repos.Entry),
-		Discovery: service.NewDiscoveryService(repos.DiscoveredDevice),
+		Entry:     entrySvc,
+		Discovery: service.NewDiscoveryService(repos.DiscoveredDevice, entrySvc),
 		Status:    service.NewStatusService(repos.Config, repos.Entry, repos.DiscoveredDevice),
 	}
 }

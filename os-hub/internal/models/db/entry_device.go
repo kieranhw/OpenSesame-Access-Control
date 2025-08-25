@@ -5,13 +5,14 @@ import "time"
 type EntryDevice struct {
 	EntryID     uint   `gorm:"primaryKey;autoIncrement"`
 	Name        string `gorm:"not null"`
-	IP          string
-	Port        int
-	Description string
+	Description *string
+	MacAddress  string    `gorm:"not null;uniqueIndex"`
+	IPAddress   string    `gorm:"not null"`
+	Port        int       `gorm:"not null"`
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 
-	// One-to-many: Device → Commands
+	// one-to-many device to commands
 	Commands []EntryCommand `gorm:"foreignKey:EntryID;references:EntryID;constraint:OnDelete:CASCADE"`
 }
 

@@ -12,7 +12,7 @@ export function timeAgo(unixSeconds: number): string {
   const diffSec = Math.floor(diffMs / 1000);
 
   if (diffSec < 60) {
-    return "just now";
+    return "Just now";
   }
 
   const diffMin = Math.floor(diffSec / 60);

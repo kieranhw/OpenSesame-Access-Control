@@ -44,7 +44,6 @@ func (s *StatusService) WaitForStatus(
 		return status, etag.Current(), true, nil
 	}
 
-	// otherwise, do the long-poll wait
 	changed := etag.Wait(clientETag, timeout)
 	if !changed {
 		return nil, etag.Current(), false, nil
@@ -60,20 +59,20 @@ func (s *StatusService) WaitForStatus(
 
 func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, error) {
 	var (
-		cfg                 *db.SystemConfig
-		entrySummaries      []dto.EntryDevice
-		discoveredSummaries []dto.DiscoveryStatus
+		systemConfig      *db.SystemConfig
+		entryDevices      []dto.EntryDevice
+		discoveredDevices []dto.DiscoveredDevice
 	)
 
 	g, ctx := errgroup.WithContext(ctx)
 
 	// system config
 	g.Go(func() error {
-		c, err := s.configRepo.GetSystemConfig(ctx)
+		cfg, err := s.configRepo.GetSystemConfig(ctx)
 		if err != nil {
 			return err
 		}
-		cfg = c
+		systemConfig = cfg
 		return nil
 	})
 
@@ -87,7 +86,8 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 		for _, d := range devices {
 			summaries = append(summaries, dto.EntryDevice{
 				ID:          d.EntryID,
-				IP:          d.IP,
+				IPAddress:   d.IPAddress,
+				MacAddress:  d.MacAddress,
 				Port:        d.Port,
 				Name:        d.Name,
 				Description: d.Description,
@@ -95,7 +95,7 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 				UpdatedAt:   d.UpdatedAt,
 			})
 		}
-		entrySummaries = summaries
+		entryDevices = summaries
 		return nil
 	})
 
@@ -105,18 +105,18 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 		if err != nil {
 			return err
 		}
-		summaries := make([]dto.DiscoveryStatus, 0, len(discovered))
+		summaries := make([]dto.DiscoveredDevice, 0, len(discovered))
 		for _, d := range discovered {
-			summaries = append(summaries, dto.DiscoveryStatus{
+			summaries = append(summaries, dto.DiscoveredDevice{
 				ID:         d.ID,
+				IPAddress:  d.IPAddress,
 				MacAddress: d.MacAddress,
 				Instance:   d.Instance,
-				IPAddress:  d.IPv4,
 				DeviceType: d.DeviceType,
 				LastSeen:   d.LastSeen.Unix(),
 			})
 		}
-		discoveredSummaries = summaries
+		discoveredDevices = summaries
 		return nil
 	})
 
@@ -125,13 +125,26 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 		return nil, err
 	}
 
+	// remove discovered devices that already exist as entry devices
+	entryMacs := make(map[string]struct{}, len(entryDevices))
+	for _, e := range entryDevices {
+		entryMacs[e.MacAddress] = struct{}{}
+	}
+
+	filteredDiscovered := make([]dto.DiscoveredDevice, 0, len(discoveredDevices))
+	for _, d := range discoveredDevices {
+		if _, exists := entryMacs[d.MacAddress]; !exists {
+			filteredDiscovered = append(filteredDiscovered, d)
+		}
+	}
+
 	resp := &dto.StatusResponse{
 		ETag:              etag.Current(),
-		EntryDevices:      entrySummaries,
-		DiscoveredDevices: discoveredSummaries,
+		EntryDevices:      entryDevices,
+		DiscoveredDevices: filteredDiscovered,
 	}
-	if cfg != nil {
-		resp.SystemName = cfg.SystemName
+	if systemConfig != nil {
+		resp.SystemName = systemConfig.SystemName
 	}
 
 	return resp, nil

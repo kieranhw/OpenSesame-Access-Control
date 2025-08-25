@@ -9,7 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"opensesame/internal/etag"
 	"opensesame/internal/models/db"
+	"opensesame/internal/models/dto"
 	"opensesame/internal/repository"
 
 	"github.com/grandcat/zeroconf"
@@ -20,6 +22,7 @@ type DiscoveryService struct {
 	entries  chan *zeroconf.ServiceEntry
 	cancel   context.CancelFunc
 	repo     repository.DiscoveredDeviceRepository
+	entrySvc *EntryService
 }
 
 type deviceInfo struct {
@@ -28,10 +31,14 @@ type deviceInfo struct {
 	DeviceType   string `json:"type"`
 }
 
-func NewDiscoveryService(repo repository.DiscoveredDeviceRepository) *DiscoveryService {
+func NewDiscoveryService(
+	repo repository.DiscoveredDeviceRepository,
+	entrySvc *EntryService,
+) *DiscoveryService {
 	return &DiscoveryService{
-		entries: make(chan *zeroconf.ServiceEntry),
-		repo:    repo,
+		entries:  make(chan *zeroconf.ServiceEntry),
+		repo:     repo,
+		entrySvc: entrySvc,
 	}
 }
 
@@ -72,7 +79,6 @@ func (d *DiscoveryService) run(ctx context.Context) {
 }
 
 func (d *DiscoveryService) handleDiscoveredDevice(ctx context.Context, entry *zeroconf.ServiceEntry) {
-	// only accept opensesame devices
 	if entry.HostName == "" || !strings.Contains(entry.HostName, "opensesame-device") {
 		return
 	}
@@ -96,20 +102,43 @@ func (d *DiscoveryService) handleDiscoveredDevice(ctx context.Context, entry *ze
 
 	device := &db.DiscoveredDevice{
 		MacAddress:  info.MacAddress,
+		IPAddress:   ip,
+		Port:        entry.Port,
 		Instance:    info.InstanceName,
 		DeviceType:  info.DeviceType,
-		IPv4:        ip,
-		Port:        entry.Port,
 		ServiceType: entry.Service,
 		LastSeen:    time.Now(),
 	}
 
 	if err := d.repo.Upsert(ctx, device); err != nil {
 		log.Printf("failed to save discovered device: %v", err)
-	} else {
-		log.Printf("[DISCOVERY] Saved device %s (%s) at %s:%d",
-			info.InstanceName, info.MacAddress, ip, entry.Port)
+		return
 	}
+
+	log.Printf("[DISCOVERY] Saved device %s (%s) at %s:%d", info.InstanceName, info.MacAddress, ip, entry.Port)
+
+	// update entry devices if we discover a MAC address that's changed IPs
+	entryDevices, err := d.entrySvc.ListEntryDevices(ctx)
+	if err == nil {
+		for _, e := range entryDevices {
+			if e.MacAddress == info.MacAddress {
+				if e.IPAddress != ip || e.Port != entry.Port {
+					log.Printf("[DISCOVERY] Updating entry device %s (%s) IP/Port -> %s:%d", e.Name, e.MacAddress, ip, entry.Port)
+
+					updateReq := dto.UpdateEntryDeviceRequest{
+						IPAddress: &ip,
+						Port:      &entry.Port,
+					}
+
+					if _, err := d.entrySvc.UpdateEntryDevice(ctx, e.ID, updateReq); err != nil {
+						log.Printf("failed to update entry device: %v", err)
+					}
+				}
+			}
+		}
+	}
+
+	etag.Bump()
 }
 
 func (d *DiscoveryService) Stop() {

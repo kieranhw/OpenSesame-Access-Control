@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"opensesame/internal/etag"
 	"opensesame/internal/models/db"
 
 	"gorm.io/gorm"
@@ -14,6 +15,7 @@ type EntryRepository interface {
 	List(ctx context.Context) ([]*db.EntryDevice, error)
 	GetEntryDeviceById(ctx context.Context, id uint) (*db.EntryDevice, error)
 	CreateEntryDevice(ctx context.Context, entry *db.EntryDevice) error
+	UpdateEntryDevice(ctx context.Context, entry *db.EntryDevice) error
 }
 
 type entryRepository struct {
@@ -51,5 +53,14 @@ func (r *entryRepository) CreateEntryDevice(ctx context.Context, entry *db.Entry
 	if err := r.db.WithContext(ctx).Create(entry).Error; err != nil {
 		return fmt.Errorf("creating entry device: %w", err)
 	}
+	etag.Bump()
+	return nil
+}
+
+func (r *entryRepository) UpdateEntryDevice(ctx context.Context, entry *db.EntryDevice) error {
+	if err := r.db.WithContext(ctx).Save(entry).Error; err != nil {
+		return fmt.Errorf("updating entry device %d: %w", entry.EntryID, err)
+	}
+	etag.Bump()
 	return nil
 }

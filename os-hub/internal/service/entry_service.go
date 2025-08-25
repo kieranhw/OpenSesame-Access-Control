@@ -34,10 +34,14 @@ func (s *EntryService) ListEntryDevices(ctx context.Context) ([]dto.EntryDevice,
 
 func (s *EntryService) CreateEntryDevice(ctx context.Context, req dto.CreateEntryDeviceRequest) (dto.EntryDevice, error) {
 	model := &db.EntryDevice{
-		Name:        req.Name,
-		IP:          req.IP,
-		Port:        req.Port,
-		Description: req.Description,
+		Name:       req.Name,
+		MacAddress: req.MacAddress,
+		IPAddress:  req.IPAddress,
+		Port:       req.Port,
+	}
+
+	if req.Description != nil && *req.Description != "" {
+		model.Description = req.Description
 	}
 
 	if err := s.repo.CreateEntryDevice(ctx, model); err != nil {
@@ -45,6 +49,40 @@ func (s *EntryService) CreateEntryDevice(ctx context.Context, req dto.CreateEntr
 	}
 
 	return s.mapEntryDeviceToDTO(model), nil
+}
+
+func (s *EntryService) UpdateEntryDevice(ctx context.Context, id uint, req dto.UpdateEntryDeviceRequest) (dto.EntryDevice, error) {
+	existing, err := s.repo.GetEntryDeviceById(ctx, id)
+	if err != nil {
+		return dto.EntryDevice{}, err
+	}
+	if existing == nil {
+		return dto.EntryDevice{}, fmt.Errorf("entry device %d not found", id)
+	}
+
+	// Apply updates
+	if req.Name != nil {
+		existing.Name = *req.Name
+	}
+	if req.Description != nil {
+		existing.Description = req.Description
+	}
+	if req.MacAddress != nil {
+		existing.MacAddress = *req.MacAddress
+	}
+	if req.IPAddress != nil {
+		existing.IPAddress = *req.IPAddress
+	}
+	if req.Port != nil {
+		existing.Port = *req.Port
+	}
+
+	// Save
+	if err := s.repo.UpdateEntryDevice(ctx, existing); err != nil {
+		return dto.EntryDevice{}, err
+	}
+
+	return s.mapEntryDeviceToDTO(existing), nil
 }
 
 func (s *EntryService) mapEntryDeviceToDTO(model *db.EntryDevice) dto.EntryDevice {
@@ -56,7 +94,7 @@ func (s *EntryService) mapEntryDeviceToDTO(model *db.EntryDevice) dto.EntryDevic
 	return dto.EntryDevice{
 		ID:          model.EntryID,
 		Name:        model.Name,
-		IP:          model.IP,
+		IPAddress:   model.IPAddress,
 		Port:        model.Port,
 		Description: model.Description,
 		CreatedAt:   model.CreatedAt,

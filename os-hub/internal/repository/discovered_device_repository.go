@@ -38,10 +38,9 @@ func (r *discoveredDeviceRepository) Upsert(ctx context.Context, device *db.Disc
 	}
 
 	// device already exists so update
-	existing.Hostname = device.Hostname
 	existing.Instance = device.Instance
 	existing.DeviceType = device.DeviceType
-	existing.IPv4 = device.IPv4
+	existing.IPAddress = device.IPAddress
 	existing.Port = device.Port
 	existing.ServiceType = device.ServiceType
 	existing.LastSeen = time.Now()
@@ -54,5 +53,6 @@ func (r *discoveredDeviceRepository) List(ctx context.Context) ([]db.DiscoveredD
 	if err := r.db.WithContext(ctx).Find(&devices).Error; err != nil {
 		return nil, err
 	}
+
 	return devices, nil
 }

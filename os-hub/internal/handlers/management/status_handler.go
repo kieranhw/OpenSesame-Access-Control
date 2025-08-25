@@ -14,7 +14,7 @@ func GetStatus(svcs *types.Services) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// Parse ETag from query param (string -> uint64)
+		// parse ETag from query param
 		var clientETag uint64
 		if etagStr := r.URL.Query().Get("etag"); etagStr != "" {
 			if v, err := strconv.ParseUint(etagStr, 10, 64); err == nil {
@@ -22,17 +22,11 @@ func GetStatus(svcs *types.Services) http.HandlerFunc {
 			}
 		}
 
-		// Parse timeout from query param
+		// parse timeout from query param
 		var timeout time.Duration
 		if t := r.URL.Query().Get("timeout"); t != "" {
-			// Try parsing with units first (e.g. "30s", "2m")
-			if dur, err := time.ParseDuration(t); err == nil {
-				timeout = dur
-			} else {
-				// If no unit, assume seconds
-				if secs, err2 := strconv.Atoi(t); err2 == nil {
-					timeout = time.Duration(secs) * time.Second
-				}
+			if secs, err := strconv.Atoi(t); err == nil {
+				timeout = time.Duration(secs) * time.Second
 			}
 		} else {
 			timeout = 0 // no timeout param means return instantly
