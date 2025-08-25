@@ -1,23 +1,30 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
-import { StatusResponse, EntryDevice, DiscoveredDevice, AccessDevice } from "../types/status";
+import {
+  EntryDevice,
+  DiscoveredDevice,
+  // AccessDevice,
+} from "../types/status";
+import api from "@/lib/api/api";
 
 interface StatusContextType {
   systemName?: string;
   entryDevices: EntryDevice[];
   discoveredDevices: DiscoveredDevice[];
-  accessDevices: AccessDevice[];
+  // accessDevices: AccessDevice[];
   loading: boolean;
   error: string | null;
 }
 
 const StatusContext = createContext<StatusContextType | undefined>(undefined);
 
+const LOG_PREFIX = "[StatusContext]";
+
 export const StatusProvider = ({ children }: { children: ReactNode }) => {
   const [systemName, setSystemName] = useState<string | undefined>(undefined);
   const [entryDevices, setEntryDevices] = useState<EntryDevice[]>([]);
   const [discoveredDevices, setDiscoveredDevices] = useState<DiscoveredDevice[]>([]);
-  const [accessDevices, setAccessDevices] = useState<AccessDevice[]>([]);
+  // const [accessDevices, setAccessDevices] = useState<AccessDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,45 +35,27 @@ export const StatusProvider = ({ children }: { children: ReactNode }) => {
 
     const poll = async () => {
       while (!cancelled) {
-        try {
-          setLoading(true);
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 30_000);
-          const url = `/management/status?timeout=35&etag=${etagRef.current}`;
-          const res = await fetch(url, { signal: controller.signal });
-          clearTimeout(timer);
+        setLoading(true);
+        const { data, error } = await api.status.LONG_POLL(35, etagRef.current);
 
-          if (res.status === 304) {
-            // No changes, just loop again
-          }
-
-          if (res.status === 200) {
-            const data: StatusResponse = await res.json();
-
-            setSystemName(data.system_name);
-            setEntryDevices(data.entry_devices || []);
-            setDiscoveredDevices(data.discovered_devices || []);
-            // setAccessDevices(data.access_devices || []);
-
-            etagRef.current = data.etag;
-            console.log("Response received:", data);
-            setError(null);
-          } else {
-            throw new Error(`Unexpected status: ${res.status}`);
-          }
-        } catch (err: any) {
-          if (err.name === "AbortError") {
-            // client aborted before server response
-          } else {
-            console.warn("Polling error: ", err?.message || err);
-            setError("Hub unreachable");
-
-            // retry after 5 sec
-            await new Promise((resolve) => setTimeout(resolve, 5000));
-          }
-        } finally {
-          setLoading(false);
+        if (data) {
+          setSystemName(data.systemName);
+          setEntryDevices(data.entryDevices || []);
+          setDiscoveredDevices(data.discoveredDevices || []);
+          // setAccessDevices(data.accessDevices || []);
+          etagRef.current = data.etag;
+          setError(null);
+          console.log(LOG_PREFIX, "System Status Updated", data);
         }
+
+        if (error && error.status !== 304) {
+          console.warn(LOG_PREFIX, "Polling error:", error.message, "status:", error.status);
+          setError("Hub unreachable");
+          // backoff before retry
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+
+        setLoading(false);
       }
     };
 
@@ -83,7 +72,7 @@ export const StatusProvider = ({ children }: { children: ReactNode }) => {
         systemName,
         entryDevices,
         discoveredDevices,
-        accessDevices,
+        // accessDevices,
         loading,
         error,
       }}

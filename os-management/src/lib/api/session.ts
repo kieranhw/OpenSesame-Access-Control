@@ -1,4 +1,5 @@
 import { ApiResponse, ApiRoute, hubApiClient } from "./api";
+import { ApiError } from "./api-error";
 
 export interface SessionResponse {
   message?: string;
@@ -15,21 +16,23 @@ export interface LogoutResponse {
  */
 async function login(password: string): Promise<ApiResponse<SessionResponse>> {
   try {
-    const res = await hubApiClient.post<SessionResponse>(ApiRoute.SESSION, { password });
+    const res = await hubApiClient.post<SessionResponse>(ApiRoute.SESSION, {
+      password,
+    });
 
     switch (res.status) {
       case 200:
         return { data: res.data };
       case 401:
-        return { error: new Error("Invalid password") };
+        return { error: new ApiError("Invalid password", 401) };
       case 428:
-        return { error: new Error("System configuration required") };
+        return { error: new ApiError("System configuration required", 428) };
       default:
         console.error(`Unexpected response from /login: ${res.status}`);
-        return { error: new Error("Login failed, please try again") };
+        return { error: new ApiError("Login failed, please try again", res.status) };
     }
   } catch {
-    return { error: new Error("Unknown error, check hub is online") };
+    return { error: new ApiError("Unknown error, check hub is online", 0) };
   }
 }
 
@@ -44,16 +47,16 @@ async function getSession(): Promise<ApiResponse<SessionResponse>> {
       case 200:
         return { data: res.data };
       case 401:
-        return { error: new Error("Login required") };
+        return { error: new ApiError("Login required", 401) };
       case 428:
-        return { error: new Error("System configuration required") };
+        return { error: new ApiError("System configuration required", 428) };
       default:
         console.error(`Unexpected response from /session: ${res.status}`);
-        return { error: new Error("Session validation failed") };
+        return { error: new ApiError("Session validation failed", res.status) };
     }
   } catch (err) {
     console.error("Unexpected error from /session:", err);
-    return { error: new Error("Unknown error during session validation") };
+    return { error: new ApiError("Unknown error during session validation", 0) };
   }
 }
 
@@ -66,13 +69,13 @@ async function logout(): Promise<ApiResponse<LogoutResponse>> {
 
     if (res.status !== 200) {
       console.error(`Unexpected response from /logout: ${res.status}`);
-      return { error: new Error("Logout failed") };
+      return { error: new ApiError("Logout failed", res.status) };
     }
 
     return { data: res.data };
   } catch (err) {
     console.error("Unexpected error from /logout:", err);
-    return { error: new Error("Unknown error during logout") };
+    return { error: new ApiError("Unknown error during logout", 0) };
   }
 }
 

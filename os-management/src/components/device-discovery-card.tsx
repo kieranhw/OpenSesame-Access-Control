@@ -63,11 +63,11 @@ export function DeviceDiscoveryCard() {
               <TableBody>
                 {discoveredDevices.map((d) => (
                   <TableRow key={d.id}>
-                    <TableCell className="pl-6 font-mono">{d.mac_address}</TableCell>
+                    <TableCell className="pl-6 font-mono">{d.macAddress}</TableCell>
                     <TableCell>{d.instance}</TableCell>
-                    <TableCell>{d.ip_address}</TableCell>
+                    <TableCell>{d.ipAddress}</TableCell>
                     <TableCell>{d.type ?? "-"}</TableCell>
-                    <TableCell>{d.last_seen ? timeAgo(d.last_seen) : "-"}</TableCell>
+                    <TableCell>{d.lastSeen ? timeAgo(d.lastSeen) : "-"}</TableCell>
                     <TableCell className="w-32 pr-6 text-right">
                       <Button variant={"secondary"} size={"sm"}>
                         Register

@@ -1,4 +1,5 @@
 import { ApiResponse, hubApiClient } from "./api";
+import { ApiError } from "./api-error";
 
 export type ConfigResponse = {
   configured: boolean;
@@ -28,13 +29,15 @@ async function GET(): Promise<ApiResponse<ConfigResponse>> {
       case 200:
         return { data: res.data };
       case 428:
-        return { error: new Error("System configuration required") };
+        return { error: new ApiError("System configuration required", 428) };
       default:
         console.error(`Unexpected response from /config: ${res.status}`);
-        return { error: new Error("Config retrieval failed, please try again") };
+        return {
+          error: new ApiError("Config retrieval failed, please try again", res.status),
+        };
     }
   } catch {
-    return { error: new Error("Unknown error, check hub is online") };
+    return { error: new ApiError("Unknown error, check hub is online", 0) };
   }
 }
 
@@ -45,15 +48,17 @@ async function POST(request: ConfigPost): Promise<ApiResponse<ConfigResponse>> {
       case 201:
         return { data: res.data };
       case 409:
-        return { error: new Error("System already configured") };
+        return { error: new ApiError("System already configured", 409) };
       case 428:
-        return { error: new Error("System configuration required") };
+        return { error: new ApiError("System configuration required", 428) };
       default:
         console.error(`Unexpected response from /config: ${res.status}`);
-        return { error: new Error("Failed to create configuration, please try again") };
+        return {
+          error: new ApiError("Failed to create configuration, please try again", res.status),
+        };
     }
   } catch {
-    return { error: new Error("Unknown error, check hub is online") };
+    return { error: new ApiError("Unknown error, check hub is online", 0) };
   }
 }
 
@@ -64,17 +69,19 @@ async function PATCH(request: ConfigPatch): Promise<ApiResponse<ConfigResponse>>
       case 200:
         return { data: res.data };
       case 400:
-        return { error: new Error("Error, " + res.data)}
+        return { error: new ApiError("Error, " + res.data, 400) };
       case 401:
-        return { error: new Error("Unauthorized, please log in") };
+        return { error: new ApiError("Unauthorized, please log in", 401) };
       case 428:
-        return { error: new Error("System configuration required") };
+        return { error: new ApiError("System configuration required", 428) };
       default:
         console.error("Unexpected response from /config", res);
-        return { error: new Error("Failed to update configuration, please try again") };
+        return {
+          error: new ApiError("Failed to update configuration, please try again", res.status),
+        };
     }
   } catch {
-    return { error: new Error("Unknown error, check hub is online") };
+    return { error: new ApiError("Unknown error, check hub is online", 0) };
   }
 }
 

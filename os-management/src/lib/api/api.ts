@@ -3,8 +3,10 @@ import axios, { AxiosInstance } from "axios";
 import camelcaseKeys from "camelcase-keys";
 import snakecaseKeys from "snakecase-keys";
 import { config } from "./config";
+import { status } from "./status";
+import { ApiError } from "./api-error";
 
-export type ApiResponse<T> = { data: T; error?: never } | { data?: never; error: Error };
+export type ApiResponse<T> = { data: T; error?: never } | { data?: never; error: ApiError };
 
 export const HUB_BASE_URI = "http://localhost:11072/management";
 
@@ -50,6 +52,7 @@ hubApiClient.interceptors.response.use(
 const api = {
   auth,
   config,
+  status,
 };
 
 export default api;
