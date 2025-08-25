@@ -80,11 +80,11 @@ export function DeviceDiscoveryCard() {
           </div>
         ) : (
           <div className="flex h-64 flex-col items-center justify-center gap-2 border-t px-4 text-center">
-            <h1 className="text-xl font-semibold">No Devices Found</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-lg font-semibold">No Devices Found</h1>
+            <p className="text-muted-foreground text-sm">
               Make sure your devices are powered on, connected to Wi‑Fi, and have the software installed correctly.
             </p>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               You can also add a device manually below, and OpenSesame will attempt to connect.
             </p>
           </div>
