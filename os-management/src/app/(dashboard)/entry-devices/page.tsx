@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { SectionCard } from "@/components/section-card";
 import { DeviceDiscoveryCard } from "@/components/device-discovery-card";
-import { EntryDataTable } from "./entry-data-table";
+import { EntryDataTable } from "@/components/data-table/entry-table/entry-device-table";
 
 async function EntryDevicesPage() {
-
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 p-4">
       <DeviceDiscoveryCard />

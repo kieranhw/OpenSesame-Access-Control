@@ -1,11 +1,7 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
-import {
-  EntryDevice,
-  DiscoveredDevice,
-  // AccessDevice,
-} from "../types/status";
 import api from "@/lib/api/api";
+import { DiscoveredDevice, EntryDevice } from "@/types/device";
 
 interface StatusContextType {
   systemName?: string;
