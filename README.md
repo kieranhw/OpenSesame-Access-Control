@@ -1,6 +1,6 @@
 # OpenSesame
 
-A personal, non-commercial project developed for learning and exploration.
+A personal, non-commercial project developed for learning and exploration with Raspberry PI hardware.
 
 OpenSesame is a local‑first access‑control system for privacy‑respecting smarthomes, designed to run offline by default.
 
@@ -20,12 +20,12 @@ OpenSesame is a local‑first access‑control system for privacy‑respecting s
 
 ## Modules
 
-### os-device
+### os-device (Raspberry PI Pico)
 - CircuitPython firmware for edge devices: keypads, RFID readers, and relay lock controllers
 - Auto‑discovery and self‑registration with the hub via mDNS
 
-### os-hub
-- Central hub written in Go; orchestrates access logic and device coordination
+### os-hub (Rasberry PI)
+- Central hub written in Go that orchestrates access logic and device coordination
 - Local SQLite storage for configuration and state
 - Real‑time status updates via long‑polling; clean interfaces for external clients
 
