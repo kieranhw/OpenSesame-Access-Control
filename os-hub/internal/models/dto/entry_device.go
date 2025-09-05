@@ -1,7 +1,5 @@
 package dto
 
-import "time"
-
 type EntryDevice struct {
 	ID         uint   `json:"id"`
 	MacAddress string `json:"mac_address"`
@@ -11,12 +9,14 @@ type EntryDevice struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 
-	LastSeen int64 `json:"last_seen"`
-	IsOnline bool  `json:"is_online"`
+	LockStatus string `json:"lock_status"`
+	IsOnline   bool   `json:"is_online"`
 
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	Commands  []EntryCommand `json:"commands,omitempty"`
+	LastSeen  int64 `json:"last_seen"`
+	CreatedAt int64 `json:"created_at"`
+	UpdatedAt int64 `json:"updated_at"`
+
+	Commands []EntryCommand `json:"commands,omitempty"`
 }
 
 type CreateEntryDeviceRequest struct {

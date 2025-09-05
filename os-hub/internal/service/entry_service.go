@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"opensesame/internal/constants"
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
 	"opensesame/internal/repository"
@@ -64,7 +66,8 @@ func (s *EntryService) CreateEntryDevice(ctx context.Context, req dto.CreateEntr
 	return s.mapEntryDeviceToDTO(model), nil
 }
 
-func (s *EntryService) UpdateEntryDevice(ctx context.Context, id uint, req dto.UpdateEntryDeviceRequest) (dto.EntryDevice, error) {
+// update the device info (name, description, mac, ip, port)
+func (s *EntryService) UpdateEntryDeviceInfo(ctx context.Context, id uint, req dto.UpdateEntryDeviceRequest) (dto.EntryDevice, error) {
 	existing, err := s.repo.GetEntryDeviceById(ctx, id)
 	if err != nil {
 		return dto.EntryDevice{}, err
@@ -104,14 +107,20 @@ func (s *EntryService) mapEntryDeviceToDTO(model *db.EntryDevice) dto.EntryDevic
 		cmds[i] = s.mapEntryCommandToDTO(&c)
 	}
 
+	// determine online status based on last seen timestamp
+	cutoff := time.Now().Add(-time.Duration(constants.LastSeenThresholdSec) * time.Second)
+	isOnline := model.LastSeen.After(cutoff)
+
 	return dto.EntryDevice{
 		ID:          model.EntryID,
 		Name:        model.Name,
 		IPAddress:   model.IPAddress,
 		Port:        model.Port,
 		Description: model.Description,
-		CreatedAt:   model.CreatedAt,
-		UpdatedAt:   model.UpdatedAt,
+		IsOnline:    isOnline,
+		LastSeen:    model.LastSeen.Unix(),
+		CreatedAt:   model.CreatedAt.Unix(),
+		UpdatedAt:   model.UpdatedAt.Unix(),
 		Commands:    cmds,
 	}
 }

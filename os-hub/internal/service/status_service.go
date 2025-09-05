@@ -91,8 +91,11 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 				Port:        d.Port,
 				Name:        d.Name,
 				Description: d.Description,
-				CreatedAt:   d.CreatedAt,
-				UpdatedAt:   d.UpdatedAt,
+				LockStatus:  string(d.LockStatus),
+				IsOnline:    d.LastSeen.After(time.Now().Add(-5 * time.Minute)),
+				LastSeen:    d.LastSeen.Unix(),
+				CreatedAt:   d.CreatedAt.Unix(),
+				UpdatedAt:   d.UpdatedAt.Unix(),
 			})
 		}
 		entryDevices = summaries
