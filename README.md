@@ -37,10 +37,4 @@ OpenSesame is a local‑first access‑control system for privacy‑respecting s
 - React Native client showcasing external integrations (e.g., control systems, mobile access apps)
 - Serves as a reference for third‑party client implementations
 
-## Why local‑first?
-- Reliability: Works without cloud connectivity
-- Privacy: Sensitive data stays on‑prem by default
-- Control: Deterministic behavior and predictable latency
-- Extensibility: Clear interfaces for integrating control systems and custom clients
-
 A fully descriptive write up coming soon!
