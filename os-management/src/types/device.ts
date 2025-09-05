@@ -1,8 +1,14 @@
+interface DeviceStatus {
+  currentState: "online" | "offline" | "unknown";
+  lastSeen: number;
+}
+
 export interface BaseDevice {
   id: number;
   macAddress: string;
   ipAddress: string;
   port: number;
+  status: DeviceStatus;
 }
 
 export interface EntryDevice extends BaseDevice {

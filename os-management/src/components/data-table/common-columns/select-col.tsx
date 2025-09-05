@@ -1,7 +1,8 @@
 import { Checkbox } from "@/components/ui/checkbox";
+import { BaseDevice } from "@/types/device";
 import { ColumnDef } from "@tanstack/react-table";
 
-export const selectColumn: ColumnDef<any> = {
+export const selectColumn = <T extends BaseDevice>(): ColumnDef<T> => ({
   id: "select",
   header: ({ table }) => (
     <Checkbox
@@ -19,4 +20,4 @@ export const selectColumn: ColumnDef<any> = {
   ),
   enableSorting: false,
   enableHiding: false,
-};
+});

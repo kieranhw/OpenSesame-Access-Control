@@ -117,24 +117,19 @@ func (d *DiscoveryService) handleDiscoveredDevice(ctx context.Context, entry *ze
 
 	log.Printf("[DISCOVERY] Saved device %s (%s) at %s:%d", info.InstanceName, info.MacAddress, ip, entry.Port)
 
-	// update entry devices if we discover a MAC address that's changed IPs
-	entryDevices, err := d.entrySvc.ListEntryDevices(ctx)
-	if err == nil {
-		for _, e := range entryDevices {
-			if e.MacAddress == info.MacAddress {
-				if e.IPAddress != ip || e.Port != entry.Port {
-					log.Printf("[DISCOVERY] Updating entry device %s (%s) IP/Port -> %s:%d", e.Name, e.MacAddress, ip, entry.Port)
+	// update entry device if we discover a MAC address that's changed IPs
+	entryDevice, err := d.entrySvc.GetEntryDeviceByMac(ctx, info.MacAddress)
+	if err == nil && (entryDevice.IPAddress != ip || entryDevice.Port != entry.Port) {
+		log.Printf("[DISCOVERY] Updating entry device %s (%s) IP/Port -> %s:%d", entryDevice.Name, entryDevice.MacAddress, ip, entry.Port)
 
-					updateReq := dto.UpdateEntryDeviceRequest{
-						IPAddress: &ip,
-						Port:      &entry.Port,
-					}
+		updateReq := dto.UpdateEntryDeviceRequest{
+			IPAddress: &ip,
+			Port:      &entry.Port,
+			LastSeen:  func(t int64) *int64 { return &t }(time.Now().Unix()),
+		}
 
-					if _, err := d.entrySvc.UpdateEntryDevice(ctx, e.ID, updateReq); err != nil {
-						log.Printf("failed to update entry device: %v", err)
-					}
-				}
-			}
+		if _, err := d.entrySvc.UpdateEntryDevice(ctx, entryDevice.ID, updateReq); err != nil {
+			log.Printf("failed to update entry device: %v", err)
 		}
 	}
 

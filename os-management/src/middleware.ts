@@ -25,7 +25,7 @@ export async function middleware(req: NextRequest) {
 
     session = (await res.json()) as SessionResponse;
   } catch {
-    loginErrorMsg = "Unable to reach the hub, please try again later.";
+    loginErrorMsg = "Unable to reach the hub, please ensure it is online.";
     session = {
       /*
         If we can't communicate with the hub, we don't know if configuration is complete,

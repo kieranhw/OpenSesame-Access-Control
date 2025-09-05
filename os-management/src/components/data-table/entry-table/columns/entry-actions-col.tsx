@@ -11,8 +11,8 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { EntryDevice } from "@/types/device";
 
-export const actionsCol: ColumnDef<EntryDevice> = {
-  id: "actions",
+export const entryActionsCol: ColumnDef<EntryDevice> = {
+  id: "entryActions",
   enableHiding: false,
   cell: ({ row }) => {
     const device = row.original;

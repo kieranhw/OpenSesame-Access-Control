@@ -2,7 +2,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { BaseDevice } from "@/types/device";
 
-export const updatedAtCol: ColumnDef<BaseDevice> = {
+export const updatedAtCol = <T extends BaseDevice>(): ColumnDef<T> => ({
   accessorKey: "updatedAt",
   header: "Updated At",
   cell: ({ row }) => {
@@ -15,4 +15,4 @@ export const updatedAtCol: ColumnDef<BaseDevice> = {
     }); 
     return <div>{formattedDate}</div>;
   },
-};
+});

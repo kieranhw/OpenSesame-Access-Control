@@ -14,6 +14,7 @@ import (
 type EntryRepository interface {
 	List(ctx context.Context) ([]*db.EntryDevice, error)
 	GetEntryDeviceById(ctx context.Context, id uint) (*db.EntryDevice, error)
+	GetEntryDeviceByMac(ctx context.Context, mac string) (*db.EntryDevice, error)
 	CreateEntryDevice(ctx context.Context, entry *db.EntryDevice) error
 	UpdateEntryDevice(ctx context.Context, entry *db.EntryDevice) error
 }
@@ -45,6 +46,20 @@ func (r *entryRepository) GetEntryDeviceById(ctx context.Context, id uint) (*db.
 			return nil, nil
 		}
 		return nil, fmt.Errorf("retrieving entry device %d: %w", id, err)
+	}
+	return &device, nil
+}
+
+func (r *entryRepository) GetEntryDeviceByMac(ctx context.Context, mac string) (*db.EntryDevice, error) {
+	var device db.EntryDevice
+	if err := r.db.WithContext(ctx).
+		Preload("Commands").
+		Where("mac_address = ?", mac).
+		First(&device).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("retrieving entry device by mac %s: %w", mac, err)
 	}
 	return &device, nil
 }

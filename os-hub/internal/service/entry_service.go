@@ -32,6 +32,19 @@ func (s *EntryService) ListEntryDevices(ctx context.Context) ([]dto.EntryDevice,
 	return dtos, nil
 }
 
+func (s *EntryService) GetEntryDeviceByMac(ctx context.Context, mac string) (*dto.EntryDevice, error) {
+	device, err := s.repo.GetEntryDeviceByMac(ctx, mac)
+	if err != nil {
+		return nil, fmt.Errorf("getting entry device by mac: %w", err)
+	}
+	if device == nil {
+		return nil, nil
+	}
+
+	dto := s.mapEntryDeviceToDTO(device)
+	return &dto, nil
+}
+
 func (s *EntryService) CreateEntryDevice(ctx context.Context, req dto.CreateEntryDeviceRequest) (dto.EntryDevice, error) {
 	model := &db.EntryDevice{
 		Name:       req.Name,
