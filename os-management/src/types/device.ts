@@ -8,7 +8,8 @@ export interface BaseDevice {
   macAddress: string;
   ipAddress: string;
   port: number;
-  status: DeviceStatus;
+  lastSeen: number;
+  isOnline: boolean;
 }
 
 export interface EntryDevice extends BaseDevice {
@@ -21,5 +22,4 @@ export interface EntryDevice extends BaseDevice {
 export interface DiscoveredDevice extends BaseDevice {
   instance: string;
   type: string;
-  lastSeen: number;
 }
