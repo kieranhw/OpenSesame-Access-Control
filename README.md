@@ -4,7 +4,7 @@ A personal, non-commercial project developed for learning and exploration with R
 
 OpenSesame is a local‑first access‑control system for privacy‑respecting smarthomes, designed to run offline by default.
 
-![os-rpi](https://github.com/user-attachments/assets/fb00dade-5de0-4e60-9489-595643aaf6df)
+<img src="https://github.com/user-attachments/assets/fb00dade-5de0-4e60-9489-595643aaf6df" alt="os-rpi" width="480" />
 
 ## What it does
 - Manage users, credentials, and device permissions locally
