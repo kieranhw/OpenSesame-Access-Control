@@ -10,11 +10,11 @@ type DiscoveredDevice struct {
 	IPAddress  string `gorm:"size:45"`
 	Port       int
 
-	Instance    string    `gorm:"size:255"`
-	DeviceType  string    `gorm:"size:50"`
-	ServiceType string    `gorm:"size:100"`
-	LastSeen    time.Time `gorm:"index"`
+	Instance    string `gorm:"size:255"`
+	DeviceType  string `gorm:"size:50"`
+	ServiceType string `gorm:"size:100"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	LastSeen  time.Time `gorm:"autoCreateTime"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }

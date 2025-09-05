@@ -25,11 +25,11 @@ export async function middleware(req: NextRequest) {
 
     session = (await res.json()) as SessionResponse;
   } catch {
-    loginErrorMsg = "Unable to reach the hub, please ensure it is online.";
+    loginErrorMsg = "Unable to reach OpenSesame, please ensure the service is running.";
     session = {
       /*
         If we can't communicate with the hub, we don't know if configuration is complete,
-        so we assume it is to prevent confusing the user with a redirect to /setup
+        so we assume that it is to prevent confusing the user with a redirect to /setup.
       */
       configured: true,
       authenticated: false,

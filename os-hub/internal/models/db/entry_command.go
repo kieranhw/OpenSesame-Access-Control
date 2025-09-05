@@ -1,0 +1,36 @@
+package db
+
+import "time"
+
+type EntryCommand struct {
+	CommandID   uint          `gorm:"primaryKey;autoIncrement"`
+	EntryID     uint          `gorm:"not null;index"` // FK to EntryDevice
+	CommandType CommandType   `gorm:"type:varchar(20);not null"`
+	Status      CommandStatus `gorm:"type:varchar(20)"`
+
+	// HTTP fields
+	URL     string `gorm:"not null"`
+	Method  string `gorm:"not null"`
+	Headers string
+	Body    string
+
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+}
+
+type CommandType string
+
+const (
+	CommandLock   CommandType = "LOCK"
+	CommandUnlock CommandType = "UNLOCK"
+	CommandFail   CommandType = "CMD_FAIL"
+)
+
+type CommandStatus string
+
+const (
+	StatusPending CommandStatus = "PENDING"
+	StatusSent    CommandStatus = "SENT"
+	StatusSuccess CommandStatus = "SUCCESS"
+	StatusFailed  CommandStatus = "FAILED"
+)
