@@ -4,8 +4,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/management/:path*",
-        destination: "http://localhost:11072/management/:path*",
+        source: "/admin/:path*",
+        destination: "http://localhost:11072/admin/:path*",
       },
     ];
   },

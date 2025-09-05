@@ -8,7 +8,7 @@ import { ApiError } from "./api-error";
 
 export type ApiResponse<T> = { data: T; error?: never } | { data?: never; error: ApiError };
 
-export const HUB_BASE_URI = "http://localhost:11072/management";
+export const HUB_BASE_URI = "http://localhost:11072/admin";
 
 export enum ApiRoute {
   SESSION = "/session",

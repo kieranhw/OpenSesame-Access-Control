@@ -11,8 +11,9 @@ type EntryDevice struct {
 	Name        string `gorm:"not null"`
 	Description *string
 
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	LastSeen  *time.Time `gorm:"index"`
+	CreatedAt time.Time  `gorm:"autoCreateTime"`
+	UpdatedAt time.Time  `gorm:"autoUpdateTime"`
 
 	// one-to-many device to commands
 	Commands []EntryCommand `gorm:"foreignKey:EntryID;references:EntryID;constraint:OnDelete:CASCADE"`
