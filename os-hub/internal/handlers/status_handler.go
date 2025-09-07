@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"opensesame/internal/models/types"
+	"opensesame/internal/models"
 )
 
-func GetStatus(svcs *types.Services) http.HandlerFunc {
+func GetStatus(svcs *models.Services) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 

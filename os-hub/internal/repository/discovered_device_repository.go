@@ -38,7 +38,7 @@ func (r *discoveredDeviceRepository) Upsert(ctx context.Context, device *db.Disc
 	}
 
 	// device already exists so update
-	existing.Instance = device.Instance
+	existing.InstanceName = device.InstanceName
 	existing.DeviceType = device.DeviceType
 	existing.IPAddress = device.IPAddress
 	existing.Port = device.Port

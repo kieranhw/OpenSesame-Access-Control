@@ -15,8 +15,8 @@ import (
 	"opensesame/internal/config"
 	"opensesame/internal/etag"
 	"opensesame/internal/httpserver"
+	"opensesame/internal/models"
 	"opensesame/internal/models/db"
-	"opensesame/internal/models/types"
 	"opensesame/internal/repository"
 	"opensesame/internal/service"
 )
@@ -97,19 +97,19 @@ func setupDatabase(filename string) *gorm.DB {
 	return gdb
 }
 
-func createRepositories(gdb *gorm.DB) *types.Repositories {
-	return &types.Repositories{
+func createRepositories(gdb *gorm.DB) *models.Repositories {
+	return &models.Repositories{
 		Config:           repository.NewConfigRepository(gdb),
 		Entry:            repository.NewEntryRepository(gdb),
 		DiscoveredDevice: repository.NewDiscoveredDeviceRepository(gdb),
 	}
 }
 
-func createServices(repos *types.Repositories) *types.Services {
+func createServices(repos *models.Repositories) *models.Services {
 	configSvc := service.NewConfigService(repos.Config)
 	entrySvc := service.NewEntryService(repos.Entry)
 
-	return &types.Services{
+	return &models.Services{
 		Auth:      service.NewAuthService(configSvc),
 		Config:    configSvc,
 		Entry:     entrySvc,

@@ -8,11 +8,13 @@ import { ApiError } from "./api-error";
 
 export type ApiResponse<T> = { data: T; error?: never } | { data?: never; error: ApiError };
 
-export const HUB_BASE_URI = "http://localhost:11072/admin";
+export const HUB_BASE_URI = "http://localhost:11072";
 
 export enum ApiRoute {
-  SESSION = "/session",
-  CONFIG = "/config",
+  PUBLIC_CONFIG = "/config",
+  ADMIN_SESSION = "/admin/session",
+  ADMIN_CONFIG = "/admin/config",
+  ADMIN_STATUS = "/admin/status",
 }
 
 export const hubApiClient: AxiosInstance = axios.create({

@@ -9,4 +9,5 @@ export enum AppRoute {
     CREDENTIALS = "/credentials",
     CLIENTS = "/clients",
     SETTINGS = "/settings",
+    PAIRING = "/pairing",
 }

@@ -85,17 +85,21 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 		summaries := make([]dto.EntryDevice, 0, len(devices))
 		for _, d := range devices {
 			summaries = append(summaries, dto.EntryDevice{
-				ID:          d.EntryID,
-				IPAddress:   d.IPAddress,
-				MacAddress:  d.MacAddress,
-				Port:        d.Port,
-				Name:        d.Name,
-				Description: d.Description,
-				LockStatus:  string(d.LockStatus),
-				IsOnline:    d.LastSeen.After(time.Now().Add(-5 * time.Minute)),
-				LastSeen:    d.LastSeen.Unix(),
-				CreatedAt:   d.CreatedAt.Unix(),
-				UpdatedAt:   d.UpdatedAt.Unix(),
+				BaseDevice: dto.BaseDevice{
+					ID:          d.EntryID,
+					MacAddress:  d.MacAddress,
+					IPAddress:   d.IPAddress,
+					Port:        d.Port,
+					Name:        d.Name,
+					Description: d.Description,
+					IsOnline:    d.LastSeen.After(time.Now().Add(-5 * time.Minute)),
+					LastSeen:    d.LastSeen.Unix(),
+					CreatedAt:   d.CreatedAt.Unix(),
+					UpdatedAt:   d.UpdatedAt.Unix(),
+				},
+				DeviceType: d.DeviceType,
+				LockStatus: d.LockStatus,
+				Commands:   nil, // omit commands in status listing
 			})
 		}
 		entryDevices = summaries
@@ -114,7 +118,7 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 				ID:         d.ID,
 				IPAddress:  d.IPAddress,
 				MacAddress: d.MacAddress,
-				Instance:   d.Instance,
+				Instance:   d.InstanceName,
 				DeviceType: d.DeviceType,
 				LastSeen:   d.LastSeen.Unix(),
 			})

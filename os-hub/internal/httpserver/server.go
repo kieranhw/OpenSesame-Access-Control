@@ -8,7 +8,7 @@ import (
 	"opensesame/internal/config"
 	handlers "opensesame/internal/handlers"
 	"opensesame/internal/middleware"
-	"opensesame/internal/models/types"
+	"opensesame/internal/models"
 
 	"github.com/gorilla/mux"
 )
@@ -19,7 +19,7 @@ func Start(cfg *config.Config, handler http.Handler) error {
 	return http.ListenAndServe(addr, handler)
 }
 
-func AddHTTPRoutes(svcs *types.Services) *mux.Router {
+func AddHTTPRoutes(svcs *models.Services) *mux.Router {
 	r := mux.NewRouter()
 	r.Use(middleware.HTTPLogger)
 	r.Use(middleware.ValidateJSONBody)

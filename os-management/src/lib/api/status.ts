@@ -1,10 +1,10 @@
 import { StatusResponse } from "@/types/status";
-import { ApiResponse, hubApiClient } from "./api";
+import { ApiResponse, ApiRoute, hubApiClient } from "./api";
 import { ApiError } from "./api-error";
 
 async function GET(): Promise<ApiResponse<StatusResponse>> {
   try {
-    const res = await hubApiClient.get<StatusResponse>("/status");
+    const res = await hubApiClient.get<StatusResponse>(ApiRoute.ADMIN_STATUS);
     switch (res.status) {
       case 200:
         return { data: res.data };
@@ -19,7 +19,7 @@ async function GET(): Promise<ApiResponse<StatusResponse>> {
 
 async function LONG_POLL(timeout: number, etag: number): Promise<ApiResponse<StatusResponse>> {
   try {
-    const res = await hubApiClient.get<StatusResponse>("/status", {
+    const res = await hubApiClient.get<StatusResponse>(ApiRoute.ADMIN_STATUS, {
       params: { timeout, etag },
       timeout: (timeout + 5) * 1000, // axios request timeout slightly > server timeout
     });

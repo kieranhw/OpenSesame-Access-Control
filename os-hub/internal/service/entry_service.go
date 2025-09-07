@@ -112,16 +112,20 @@ func (s *EntryService) mapEntryDeviceToDTO(model *db.EntryDevice) dto.EntryDevic
 	isOnline := model.LastSeen.After(cutoff)
 
 	return dto.EntryDevice{
-		ID:          model.EntryID,
-		Name:        model.Name,
-		IPAddress:   model.IPAddress,
-		Port:        model.Port,
-		Description: model.Description,
-		IsOnline:    isOnline,
-		LastSeen:    model.LastSeen.Unix(),
-		CreatedAt:   model.CreatedAt.Unix(),
-		UpdatedAt:   model.UpdatedAt.Unix(),
-		Commands:    cmds,
+		BaseDevice: dto.BaseDevice{
+			ID:          model.EntryID,
+			Name:        model.Name,
+			IPAddress:   model.IPAddress,
+			Port:        model.Port,
+			Description: model.Description,
+			IsOnline:    isOnline,
+			LastSeen:    model.LastSeen.Unix(),
+			CreatedAt:   model.CreatedAt.Unix(),
+			UpdatedAt:   model.UpdatedAt.Unix(),
+		},
+		DeviceType: model.DeviceType,
+		LockStatus: model.LockStatus,
+		Commands:   cmds,
 	}
 }
 

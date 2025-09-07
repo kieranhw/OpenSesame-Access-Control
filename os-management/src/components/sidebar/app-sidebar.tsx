@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { DoorClosedLocked, FileLock2, House, KeyRound, Microchip, MonitorSmartphone, Settings } from "lucide-react";
+import { DoorClosedLocked, FileLock2, House, KeyRound, Microchip, MonitorSmartphone, ServerCog, Settings, UserLock } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
@@ -27,17 +27,22 @@ const sidebarItems = [
         url: AppRoute.ACCESS,
         icon: KeyRound,
       },
+      {
+        title: "Pairing",
+        url: AppRoute.PAIRING,
+        icon: ServerCog,
+      }
     ],
-  },
-  {
-    title: "Credentials",
-    url: AppRoute.CREDENTIALS,
-    icon: FileLock2,
   },
   {
     title: "Clients",
     url: AppRoute.CLIENTS,
     icon: MonitorSmartphone,
+  },
+  {
+    title: "Credentials",
+    url: AppRoute.CREDENTIALS,
+    icon: UserLock,
   },
   {
     title: "Settings",

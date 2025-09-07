@@ -16,7 +16,7 @@ export interface LogoutResponse {
  */
 async function login(password: string): Promise<ApiResponse<SessionResponse>> {
   try {
-    const res = await hubApiClient.post<SessionResponse>(ApiRoute.SESSION, {
+    const res = await hubApiClient.post<SessionResponse>(ApiRoute.ADMIN_SESSION, {
       password,
     });
 
@@ -41,7 +41,7 @@ async function login(password: string): Promise<ApiResponse<SessionResponse>> {
  */
 async function getSession(): Promise<ApiResponse<SessionResponse>> {
   try {
-    const res = await hubApiClient.get<SessionResponse>(ApiRoute.SESSION);
+    const res = await hubApiClient.get<SessionResponse>(ApiRoute.ADMIN_SESSION);
 
     switch (res.status) {
       case 200:
@@ -65,7 +65,7 @@ async function getSession(): Promise<ApiResponse<SessionResponse>> {
  */
 async function logout(): Promise<ApiResponse<LogoutResponse>> {
   try {
-    const res = await hubApiClient.delete<LogoutResponse>(ApiRoute.SESSION);
+    const res = await hubApiClient.delete<LogoutResponse>(ApiRoute.ADMIN_SESSION);
 
     if (res.status !== 200) {
       console.error(`Unexpected response from /logout: ${res.status}`);

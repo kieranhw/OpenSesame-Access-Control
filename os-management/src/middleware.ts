@@ -18,7 +18,7 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
 
   try {
-    const res = await fetch(HUB_BASE_URI + ApiRoute.SESSION, {
+    const res = await fetch(HUB_BASE_URI + ApiRoute.ADMIN_SESSION, {
       method: "GET",
       headers: { cookie: cookies },
     });
