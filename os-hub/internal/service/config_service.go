@@ -8,6 +8,7 @@ import (
 	"opensesame/internal/etag"
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
+	"opensesame/internal/models/types"
 	"opensesame/internal/repository"
 
 	"github.com/google/uuid"
@@ -61,7 +62,7 @@ func (s *ConfigService) CreateConfig(ctx context.Context, req dto.CreateConfigRe
 		return nil, fmt.Errorf("unable to retrieve system configuration: %w", err)
 	}
 	if configured {
-		return nil, ErrAlreadyConfigured
+		return nil, types.ErrAlreadyConfigured
 	}
 
 	adminPasswordHash, err := bcrypt.GenerateFromPassword([]byte(req.AdminPassword), bcrypt.DefaultCost)
@@ -99,7 +100,7 @@ func (s *ConfigService) CreateConfig(ctx context.Context, req dto.CreateConfigRe
 
 func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateConfigRequest) (*dto.ConfigResponse, error) {
 	if payload.SystemName == nil && payload.AdminPassword == nil && payload.SessionTimeoutSec == nil {
-		return nil, ErrNoUpdateFields
+		return nil, types.ErrNoUpdateFields
 	}
 
 	sysCfg, err := s.repo.GetSystemConfig(ctx)
@@ -107,7 +108,7 @@ func (s *ConfigService) UpdateConfig(ctx context.Context, payload *dto.UpdateCon
 		return nil, fmt.Errorf("error fetching current config for update: %w", err)
 	}
 	if sysCfg == nil {
-		return nil, ErrNotConfigured
+		return nil, types.ErrNotConfigured
 	}
 
 	// Apply updates
@@ -139,7 +140,7 @@ func (s *ConfigService) applyConfigUpdates(config *db.SystemConfig, payload *dto
 	if payload.AdminPassword != nil {
 		newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(*payload.AdminPassword), bcrypt.DefaultCost)
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrPasswordHashingFailed, err)
+			return fmt.Errorf("%w: %v", types.ErrPasswordHashingFailed, err)
 		}
 		config.AdminPasswordHash = string(newPasswordHash)
 	}

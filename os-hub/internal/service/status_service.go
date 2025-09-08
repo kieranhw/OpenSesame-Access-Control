@@ -5,6 +5,7 @@ import (
 	"opensesame/internal/etag"
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
+	"opensesame/internal/models/mappers"
 	"opensesame/internal/repository"
 	"time"
 
@@ -12,21 +13,17 @@ import (
 )
 
 type StatusService struct {
-	configRepo           repository.ConfigRepository
-	entryRepo            repository.EntryRepository
-	discoveredDeviceRepo repository.DiscoveredDeviceRepository
-	// accessRepo repository.AccessRepository
+	configRepo repository.ConfigRepository
+	deviceRepo repository.DeviceRepository
 }
 
 func NewStatusService(
 	configRepo repository.ConfigRepository,
-	entryRepo repository.EntryRepository,
-	discoveredRepo repository.DiscoveredDeviceRepository,
+	deviceRepo repository.DeviceRepository,
 ) *StatusService {
 	return &StatusService{
-		configRepo:           configRepo,
-		entryRepo:            entryRepo,
-		discoveredDeviceRepo: discoveredRepo,
+		configRepo: configRepo,
+		deviceRepo: deviceRepo,
 	}
 }
 
@@ -59,9 +56,8 @@ func (s *StatusService) WaitForStatus(
 
 func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, error) {
 	var (
-		systemConfig      *db.SystemConfig
-		entryDevices      []dto.EntryDevice
-		discoveredDevices []dto.DiscoveredDevice
+		systemConfig *db.SystemConfig
+		entryDevices []dto.EntryDevice
 	)
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -78,52 +74,16 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 
 	// entry devices
 	g.Go(func() error {
-		devices, err := s.entryRepo.List(ctx)
+		devices, err := s.deviceRepo.ListEntryDevices(ctx)
 		if err != nil {
 			return err
 		}
-		summaries := make([]dto.EntryDevice, 0, len(devices))
-		for _, d := range devices {
-			summaries = append(summaries, dto.EntryDevice{
-				BaseDevice: dto.BaseDevice{
-					ID:          d.EntryID,
-					MacAddress:  d.MacAddress,
-					IPAddress:   d.IPAddress,
-					Port:        d.Port,
-					Name:        d.Name,
-					Description: d.Description,
-					IsOnline:    d.LastSeen.After(time.Now().Add(-5 * time.Minute)),
-					LastSeen:    d.LastSeen.Unix(),
-					CreatedAt:   d.CreatedAt.Unix(),
-					UpdatedAt:   d.UpdatedAt.Unix(),
-				},
-				DeviceType: d.DeviceType,
-				LockStatus: d.LockStatus,
-				Commands:   nil, // omit commands in status listing
-			})
-		}
-		entryDevices = summaries
-		return nil
-	})
 
-	// discovered devices
-	g.Go(func() error {
-		discovered, err := s.discoveredDeviceRepo.List(ctx)
-		if err != nil {
-			return err
+		entryDevices = make([]dto.EntryDevice, 0, len(devices))
+		for _, d := range devices {
+			entryDevices = append(entryDevices, mappers.EntryDeviceToDTO(d))
 		}
-		summaries := make([]dto.DiscoveredDevice, 0, len(discovered))
-		for _, d := range discovered {
-			summaries = append(summaries, dto.DiscoveredDevice{
-				ID:         d.ID,
-				IPAddress:  d.IPAddress,
-				MacAddress: d.MacAddress,
-				Instance:   d.InstanceName,
-				DeviceType: d.DeviceType,
-				LastSeen:   d.LastSeen.Unix(),
-			})
-		}
-		discoveredDevices = summaries
+
 		return nil
 	})
 
@@ -138,17 +98,9 @@ func (s *StatusService) GetStatus(ctx context.Context) (*dto.StatusResponse, err
 		entryMacs[e.MacAddress] = struct{}{}
 	}
 
-	filteredDiscovered := make([]dto.DiscoveredDevice, 0, len(discoveredDevices))
-	for _, d := range discoveredDevices {
-		if _, exists := entryMacs[d.MacAddress]; !exists {
-			filteredDiscovered = append(filteredDiscovered, d)
-		}
-	}
-
 	resp := &dto.StatusResponse{
-		ETag:              etag.Current(),
-		EntryDevices:      entryDevices,
-		DiscoveredDevices: filteredDiscovered,
+		ETag:         etag.Current(),
+		EntryDevices: entryDevices,
 	}
 	if systemConfig != nil {
 		resp.SystemName = systemConfig.SystemName

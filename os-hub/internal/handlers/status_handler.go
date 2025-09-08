@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"opensesame/internal/service"
 	"strconv"
 	"time"
-
-	"opensesame/internal/models"
 )
 
-func GetStatus(svcs *models.Services) http.HandlerFunc {
+func GetStatus(svcs *service.ServicesType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 

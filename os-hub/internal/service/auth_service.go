@@ -10,6 +10,7 @@ import (
 	"opensesame/internal/constants"
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
+	"opensesame/internal/models/types"
 	"opensesame/internal/util"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -30,10 +31,10 @@ func (a *AuthService) Login(ctx context.Context, req dto.LoginRequest) (dto.Sess
 	cfg, err := a.configSvc.GetSystemConfigEntity(ctx)
 	if err != nil || cfg == nil {
 		return dto.SessionResponse{
-			Message:       util.StrPtr(ErrNotConfigured.Error()),
+			Message:       util.StrPtr(types.ErrNotConfigured.Error()),
 			Authenticated: false,
 			Configured:    false,
-		}, nil, ErrNotConfigured
+		}, nil, types.ErrNotConfigured
 	}
 
 	if err := a.validatePassword(cfg.AdminPasswordHash, req.Password); err != nil {
@@ -64,7 +65,7 @@ func (a *AuthService) Login(ctx context.Context, req dto.LoginRequest) (dto.Sess
 func (a *AuthService) ValidateSession(ctx context.Context, tokenString string) (bool, error) {
 	cfg, err := a.configSvc.GetSystemConfigEntity(ctx)
 	if err != nil || cfg == nil {
-		return false, ErrNotConfigured
+		return false, types.ErrNotConfigured
 	}
 
 	token, err := a.parseToken(cfg, tokenString)
@@ -83,7 +84,7 @@ func (a *AuthService) ValidateSession(ctx context.Context, tokenString string) (
 func (a *AuthService) RefreshSession(ctx context.Context, cookie *http.Cookie) (*http.Cookie, error) {
 	cfg, err := a.configSvc.GetSystemConfigEntity(ctx)
 	if err != nil || cfg == nil {
-		return nil, ErrNotConfigured
+		return nil, types.ErrNotConfigured
 	}
 
 	// Validate the existing token

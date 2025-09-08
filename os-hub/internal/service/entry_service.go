@@ -2,33 +2,34 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"time"
+	"strings"
 
-	"opensesame/internal/constants"
 	"opensesame/internal/models/db"
 	"opensesame/internal/models/dto"
+	"opensesame/internal/models/mappers"
+	"opensesame/internal/models/types"
 	"opensesame/internal/repository"
+	"opensesame/internal/util"
 )
 
 type EntryService struct {
-	repo repository.EntryRepository
+	repo repository.DeviceRepository
 }
 
-func NewEntryService(repo repository.EntryRepository) *EntryService {
+func NewEntryService(repo repository.DeviceRepository) *EntryService {
 	return &EntryService{repo: repo}
 }
 
 func (s *EntryService) ListEntryDevices(ctx context.Context) ([]dto.EntryDevice, error) {
-	devices, err := s.repo.List(ctx)
+	devices, err := s.repo.ListEntryDevices(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing entry devices: %w", err)
 	}
 
 	dtos := make([]dto.EntryDevice, len(devices))
 	for i, d := range devices {
-		dtos[i] = s.mapEntryDeviceToDTO(d)
+		dtos[i] = mappers.EntryDeviceToDTO(d)
 	}
 
 	return dtos, nil
@@ -43,30 +44,57 @@ func (s *EntryService) GetEntryDeviceByMac(ctx context.Context, mac string) (*dt
 		return nil, nil
 	}
 
-	dto := s.mapEntryDeviceToDTO(device)
+	dto := mappers.EntryDeviceToDTO(device)
 	return &dto, nil
 }
 
 func (s *EntryService) CreateEntryDevice(ctx context.Context, req dto.CreateEntryDeviceRequest) (dto.EntryDevice, error) {
-	model := &db.EntryDevice{
-		Name:       req.Name,
-		MacAddress: req.MacAddress,
-		IPAddress:  req.IPAddress,
-		Port:       req.Port,
+	info, err := util.GetDeviceInfo(ctx, req.IPAddress, req.Port)
+	if err != nil {
+		return dto.EntryDevice{}, err
+	}
+
+	if info.MacAddress == "" {
+		return dto.EntryDevice{}, fmt.Errorf("device at %s:%d did not return a MAC address", req.IPAddress, req.Port)
+	}
+
+	if info.DeviceType != "entry" {
+		return dto.EntryDevice{}, fmt.Errorf("device at %s:%d is not an entry device (type=%s)", req.IPAddress, req.Port, info.DeviceType)
+	}
+
+	mac := strings.ToUpper(strings.ReplaceAll(info.MacAddress, ":", ""))
+
+	device := db.Device{
+		MacAddress:   mac,
+		IPAddress:    req.IPAddress,
+		Port:         req.Port,
+		Name:         req.Name,
+		Description:  req.Description,
+		ServiceType:  req.ServiceType,
+		DeviceType:   string(info.DeviceType),
+		InstanceType: info.InstanceType,
+		InstanceName: info.InstanceName,
+	}
+
+	entry := &db.EntryDevice{
+		Device:     device,
+		LockStatus: types.LockStatusUnknown,
 	}
 
 	if req.Description != nil && *req.Description != "" {
-		model.Description = req.Description
+		entry.Device.Description = req.Description
+	}
+	if req.ServiceType != nil && *req.ServiceType != "" {
+		entry.Device.ServiceType = req.ServiceType
 	}
 
-	if err := s.repo.CreateEntryDevice(ctx, model); err != nil {
+	if err := s.repo.CreateEntryDevice(ctx, entry); err != nil {
 		return dto.EntryDevice{}, fmt.Errorf("creating entry device: %w", err)
 	}
 
-	return s.mapEntryDeviceToDTO(model), nil
+	return mappers.EntryDeviceToDTO(entry), nil
 }
 
-// update the device info (name, description, mac, ip, port)
 func (s *EntryService) UpdateEntryDeviceInfo(ctx context.Context, id uint, req dto.UpdateEntryDeviceRequest) (dto.EntryDevice, error) {
 	existing, err := s.repo.GetEntryDeviceById(ctx, id)
 	if err != nil {
@@ -76,88 +104,50 @@ func (s *EntryService) UpdateEntryDeviceInfo(ctx context.Context, id uint, req d
 		return dto.EntryDevice{}, fmt.Errorf("entry device %d not found", id)
 	}
 
-	// Apply updates
+	updates := make(map[string]interface{})
+
 	if req.Name != nil {
-		existing.Name = *req.Name
+		updates["name"] = *req.Name
 	}
 	if req.Description != nil {
-		existing.Description = req.Description
+		updates["description"] = req.Description
 	}
 	if req.MacAddress != nil {
-		existing.MacAddress = *req.MacAddress
+		mac := strings.ToUpper(strings.ReplaceAll(*req.MacAddress, ":", ""))
+		updates["mac_address"] = mac
 	}
 	if req.IPAddress != nil {
-		existing.IPAddress = *req.IPAddress
+		updates["ip_address"] = *req.IPAddress
 	}
 	if req.Port != nil {
-		existing.Port = *req.Port
+		updates["port"] = *req.Port
+	}
+	if req.ServiceType != nil {
+		updates["service_type"] = req.ServiceType
+	}
+	if req.DeviceType != nil {
+		updates["device_type"] = *req.DeviceType
+	}
+	if req.InstanceType != nil {
+		updates["instance_type"] = *req.InstanceType
+	}
+	if req.InstanceName != nil {
+		updates["instance_name"] = *req.InstanceName
+	}
+	if req.LastSeen != nil {
+		updates["last_seen"] = *req.LastSeen
 	}
 
-	// Save
-	if err := s.repo.UpdateEntryDevice(ctx, existing); err != nil {
+	if len(updates) > 0 {
+		if err := s.repo.UpdateEntryDevice(ctx, id, updates); err != nil {
+			return dto.EntryDevice{}, err
+		}
+	}
+
+	updated, err := s.repo.GetEntryDeviceById(ctx, id)
+	if err != nil {
 		return dto.EntryDevice{}, err
 	}
 
-	return s.mapEntryDeviceToDTO(existing), nil
-}
-
-func (s *EntryService) mapEntryDeviceToDTO(model *db.EntryDevice) dto.EntryDevice {
-	cmds := make([]dto.EntryCommand, len(model.Commands))
-	for i, c := range model.Commands {
-		cmds[i] = s.mapEntryCommandToDTO(&c)
-	}
-
-	// determine online status based on last seen timestamp
-	cutoff := time.Now().Add(-time.Duration(constants.LastSeenThresholdSec) * time.Second)
-	isOnline := model.LastSeen.After(cutoff)
-
-	return dto.EntryDevice{
-		BaseDevice: dto.BaseDevice{
-			ID:          model.EntryID,
-			Name:        model.Name,
-			IPAddress:   model.IPAddress,
-			Port:        model.Port,
-			Description: model.Description,
-			IsOnline:    isOnline,
-			LastSeen:    model.LastSeen.Unix(),
-			CreatedAt:   model.CreatedAt.Unix(),
-			UpdatedAt:   model.UpdatedAt.Unix(),
-		},
-		DeviceType: model.DeviceType,
-		LockStatus: model.LockStatus,
-		Commands:   cmds,
-	}
-}
-
-func (s *EntryService) mapEntryCommandToDTO(model *db.EntryCommand) dto.EntryCommand {
-	// Build HTTP DTO directly from EntryCommand fields
-	httpDTO := &dto.HttpCommand{
-		URL:    model.URL,
-		Method: model.Method,
-		Body:   model.Body,
-	}
-
-	if model.Headers != "" {
-		httpDTO.Headers = parseHeaders(model.Headers)
-	}
-
-	return dto.EntryCommand{
-		ID:        model.CommandID,
-		Type:      string(model.CommandType),
-		Status:    string(model.Status),
-		CreatedAt: model.CreatedAt,
-		Http:      httpDTO,
-	}
-}
-
-func parseHeaders(raw string) map[string]string {
-	if raw == "" {
-		return nil
-	}
-	var headers map[string]string
-	if err := json.Unmarshal([]byte(raw), &headers); err != nil {
-		// If parsing fails, return nil instead of crashing
-		return nil
-	}
-	return headers
+	return mappers.EntryDeviceToDTO(updated), nil
 }

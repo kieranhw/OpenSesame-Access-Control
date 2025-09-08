@@ -3,5 +3,12 @@ package types
 type DeviceType string
 
 const (
-	DeviceTypeRelayLock DeviceType = "relay_lock"
+	DeviceTypeEntry  DeviceType = "entry"
+	DeviceTypeAccess DeviceType = "access"
+)
+
+type InstanceType string
+
+const (
+	InstanceTypeRelayLock InstanceType = "relay_lock"
 )

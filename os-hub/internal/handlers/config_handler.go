@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"opensesame/internal/models/dto"
+	"opensesame/internal/models/types"
 	"opensesame/internal/service"
 )
 
@@ -81,11 +82,11 @@ func UpdateSystemConfig(svc *service.ConfigService) http.HandlerFunc {
 		updatedCfg, err := svc.UpdateConfig(r.Context(), &reqPayload)
 		if err != nil {
 			switch {
-			case errors.Is(err, service.ErrNotConfigured):
+			case errors.Is(err, types.ErrNotConfigured):
 				http.Error(w, "system not configured", http.StatusPreconditionFailed)
-			case errors.Is(err, service.ErrNoUpdateFields):
+			case errors.Is(err, types.ErrNoUpdateFields):
 				http.Error(w, "nothing to update", http.StatusBadRequest)
-			case errors.Is(err, service.ErrPasswordHashingFailed):
+			case errors.Is(err, types.ErrPasswordHashingFailed):
 				http.Error(w, "error hashing password", http.StatusInternalServerError)
 			default:
 				http.Error(w, err.Error(), http.StatusInternalServerError)

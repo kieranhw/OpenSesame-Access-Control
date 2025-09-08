@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"opensesame/internal/models/dto"
+	"opensesame/internal/models/types"
 	"opensesame/internal/service"
 )
 
@@ -30,7 +31,7 @@ func LoginHandler(authSvc *service.AuthService) http.HandlerFunc {
 		}
 
 		switch {
-		case errors.Is(err, service.ErrNotConfigured):
+		case errors.Is(err, types.ErrNotConfigured):
 			w.WriteHeader(http.StatusPreconditionRequired)
 		case err != nil:
 			w.WriteHeader(http.StatusUnauthorized)
@@ -70,8 +71,8 @@ func ValidateSessionHandler(configSvc *service.ConfigService, authSvc *service.A
 		}
 
 		isValid, err := authSvc.ValidateSession(r.Context(), cookie.Value)
-		if err == service.ErrNotConfigured {
-			msg := service.ErrNotConfigured.Error()
+		if err == types.ErrNotConfigured {
+			msg := types.ErrNotConfigured.Error()
 			json.NewEncoder(w).Encode(dto.SessionResponse{
 				Message:       &msg,
 				Authenticated: false,

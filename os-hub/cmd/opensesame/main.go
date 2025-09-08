@@ -15,7 +15,6 @@ import (
 	"opensesame/internal/config"
 	"opensesame/internal/etag"
 	"opensesame/internal/httpserver"
-	"opensesame/internal/models"
 	"opensesame/internal/models/db"
 	"opensesame/internal/repository"
 	"opensesame/internal/service"
@@ -88,8 +87,7 @@ func setupDatabase(filename string) *gorm.DB {
 	if err := gdb.AutoMigrate(
 		&db.SystemConfig{},
 		&db.EntryDevice{},
-		&db.EntryCommand{},
-		&db.DiscoveredDevice{},
+		&db.Device{},
 	); err != nil {
 		log.Fatalf("AutoMigrate failed: %v", err)
 	}
@@ -97,23 +95,22 @@ func setupDatabase(filename string) *gorm.DB {
 	return gdb
 }
 
-func createRepositories(gdb *gorm.DB) *models.Repositories {
-	return &models.Repositories{
-		Config:           repository.NewConfigRepository(gdb),
-		Entry:            repository.NewEntryRepository(gdb),
-		DiscoveredDevice: repository.NewDiscoveredDeviceRepository(gdb),
+func createRepositories(gdb *gorm.DB) *repository.RepositoriesType {
+	return &repository.RepositoriesType{
+		Config: repository.NewConfigRepository(gdb),
+		Device: repository.NewDeviceRepository(gdb),
 	}
 }
 
-func createServices(repos *models.Repositories) *models.Services {
+func createServices(repos *repository.RepositoriesType) *service.ServicesType {
 	configSvc := service.NewConfigService(repos.Config)
-	entrySvc := service.NewEntryService(repos.Entry)
+	entrySvc := service.NewEntryService(repos.Device)
 
-	return &models.Services{
+	return &service.ServicesType{
 		Auth:      service.NewAuthService(configSvc),
 		Config:    configSvc,
 		Entry:     entrySvc,
-		Discovery: service.NewDiscoveryService(repos.DiscoveredDevice, entrySvc),
-		Status:    service.NewStatusService(repos.Config, repos.Entry, repos.DiscoveredDevice),
+		Discovery: service.NewDiscoveryService(repos.Device, entrySvc),
+		Status:    service.NewStatusService(repos.Config, repos.Device),
 	}
 }

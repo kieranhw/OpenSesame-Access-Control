@@ -3,12 +3,12 @@ package handlers
 import (
 	"net/http"
 	"opensesame/internal/middleware"
-	"opensesame/internal/models"
+	"opensesame/internal/service"
 
 	"github.com/gorilla/mux"
 )
 
-func MountRoutes(parent *mux.Router, svcs *models.Services) {
+func MountRoutes(parent *mux.Router, svcs *service.ServicesType) {
 	// TODO: this should be changed in production to 127.0.0.1:443, where the management app is hosted
 	parent.Use(middleware.CORSMiddleware("http://localhost:3000"))
 	parent.PathPrefix("/").Methods("OPTIONS").HandlerFunc(
