@@ -15,6 +15,7 @@ export enum ApiRoute {
   ADMIN_SESSION = "/admin/session",
   ADMIN_CONFIG = "/admin/config",
   ADMIN_STATUS = "/admin/status",
+  ADMIN_ENTRY_DEVICES = "/admin/entry_devices",
 }
 
 export const hubApiClient: AxiosInstance = axios.create({

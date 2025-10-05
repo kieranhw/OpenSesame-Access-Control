@@ -18,17 +18,13 @@ export function EditNameDialog({ device, onClose }: DeviceDetailsDialogProps) {
 
   const handleSubmit = async () => {
     try {
-      await device.rename("Test Name");
-      bumpState();
-      // setIsLoading(true);
-      // const response = await updateDeviceName(device.id, nameValue);
-      // if (response.success) {
-      //   console.log("✅ Name updated successfully");
-      // }
+      setIsLoading(true);
 
+      await device.rename(nameValue);
+      bumpState();
       onClose?.();
     } catch (err) {
-      console.error("❌ Failed to update name", err);
+      console.error("Failed to update name", err);
     } finally {
       setIsLoading(false);
     }

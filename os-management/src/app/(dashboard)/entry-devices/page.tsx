@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { SectionCard } from "@/components/section-card";
-import { EntryDataTable } from "@/components/data-table/entry-table/entry-device-table";
+import { EntryDataTable } from "@/components/data-tables/entry-table/entry-device-table";
 import { PageLayout } from "@/components/page-layout";
 
 async function EntryDevicesPage() {

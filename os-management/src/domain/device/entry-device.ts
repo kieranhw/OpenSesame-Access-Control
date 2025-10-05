@@ -1,5 +1,6 @@
 import { BaseDevice } from "./base-device";
 import { EntryDeviceData } from "../common/device";
+import { ApiRoute, hubApiClient } from "@/lib/api/api";
 
 export class EntryDevice extends BaseDevice {
   declare data: EntryDeviceData;
@@ -9,8 +10,15 @@ export class EntryDevice extends BaseDevice {
   }
 
   async rename(newName: string): Promise<void> {
-    // TODO: implement PATCH device API call
-    //const { data, error } = await api.device.update();
+    const response = await hubApiClient.patch(ApiRoute.ADMIN_ENTRY_DEVICES + "/" + this.id, {
+      name: newName,
+    });
+
+    const responseText = await response.data;
+    if (!response) {
+      throw new Error(`Failed to rename device, ${responseText ?? "unknown error"}`);
+    }
+
     this.data.name = newName;
   }
 

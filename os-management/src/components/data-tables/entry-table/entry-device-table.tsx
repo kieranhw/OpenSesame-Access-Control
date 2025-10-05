@@ -10,9 +10,11 @@ import { ipAddressCol } from "../common-columns/ip-address-col";
 import { entryActionsCol } from "./columns/entry-actions-col";
 import { statusCol } from "../common-columns/status-col";
 import { EntryDevice } from "@/domain/device/entry-device";
+import { instanceCol } from "../common-columns/instance-col";
 
 const entryColumns: ColumnDef<EntryDevice>[] = [
   deviceNameCol<EntryDevice>(),
+  instanceCol<EntryDevice>(),
   macAddressCol<EntryDevice>(),
   ipAddressCol<EntryDevice>(),
   portCol<EntryDevice>(),
