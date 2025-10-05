@@ -102,7 +102,7 @@ func (d *DiscoveryService) handleDiscoveredDevice(ctx context.Context, entry *ze
 				LastSeen:     func(t int64) *int64 { return &t }(time.Now().Unix()),
 			}
 
-			if _, err := d.entrySvc.UpdateEntryDeviceInfo(ctx, existingEntry.ID, updateReq); err != nil {
+			if _, err := d.entrySvc.UpdateEntryDevice(ctx, existingEntry.ID, updateReq); err != nil {
 				log.Printf("failed to update entry device: %v", err)
 			}
 		} else if existingEntry == nil {

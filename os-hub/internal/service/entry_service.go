@@ -95,7 +95,7 @@ func (s *EntryService) CreateEntryDevice(ctx context.Context, req dto.CreateEntr
 	return mappers.EntryDeviceToDTO(entry), nil
 }
 
-func (s *EntryService) UpdateEntryDeviceInfo(ctx context.Context, id uint, req dto.UpdateEntryDeviceRequest) (dto.EntryDevice, error) {
+func (s *EntryService) UpdateEntryDevice(ctx context.Context, id uint, req dto.UpdateEntryDeviceRequest) (dto.EntryDevice, error) {
 	existing, err := s.repo.GetEntryDeviceById(ctx, id)
 	if err != nil {
 		return dto.EntryDevice{}, err

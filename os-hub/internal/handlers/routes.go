@@ -36,5 +36,5 @@ func MountRoutes(parent *mux.Router, svcs *service.ServicesType) {
 	// entry
 	admin.HandleFunc("/entry_devices", ListEntryDevices(svcs.Entry)).Methods("GET")
 	admin.HandleFunc("/entry_devices", CreateEntryDevice(svcs.Entry)).Methods("POST")
-
+	admin.HandleFunc("/entry_devices/{entryId}", UpdateEntryDevice(svcs.Entry)).Methods("PATCH")
 }

@@ -7,6 +7,9 @@ import (
 	"opensesame/internal/models/dto"
 	"opensesame/internal/models/types"
 	"opensesame/internal/service"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func ListEntryDevices(svc *service.EntryService) http.HandlerFunc {
@@ -41,6 +44,45 @@ func CreateEntryDevice(svc *service.EntryService) http.HandlerFunc {
 		}
 
 		device, err := svc.CreateEntryDevice(r.Context(), req)
+		if err != nil {
+			switch {
+			case errors.Is(err, types.ErrBadRequest):
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			case errors.Is(err, types.ErrUnreachableDevice):
+				http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			default:
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		if err := json.NewEncoder(w).Encode(device); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func UpdateEntryDevice(svc *service.EntryService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		// get entry ID from url
+		vars := mux.Vars(r)
+		entryIDStr := vars["entryId"]
+		entryID, err := strconv.ParseUint(entryIDStr, 10, 64)
+		if err != nil {
+			http.Error(w, "Failed to parse Entry ID, must be a number", http.StatusBadRequest)
+			return
+		}
+
+		var req dto.UpdateEntryDeviceRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		device, err := svc.UpdateEntryDevice(r.Context(), uint(entryID), req)
 		if err != nil {
 			switch {
 			case errors.Is(err, types.ErrBadRequest):
