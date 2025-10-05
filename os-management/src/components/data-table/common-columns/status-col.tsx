@@ -1,6 +1,6 @@
 "use client";
+import { BaseDevice } from "@/domain/device/base-device";
 import { ColumnDef } from "@tanstack/react-table";
-import { BaseDevice } from "@/types/device";
 
 export const statusCol = <T extends BaseDevice>(): ColumnDef<T> => ({
   accessorKey: "status",
@@ -12,7 +12,7 @@ export const statusCol = <T extends BaseDevice>(): ColumnDef<T> => ({
       <div className="flex items-center gap-2">
         <span className="relative flex size-3">
           <span
-            className={`absolute inline-flex h-full w-full rounded-full ${isOnline ? "bg-green-500" : "animate-ping bg-destructive"} opacity-75`}
+            className={`absolute inline-flex h-full w-full rounded-full ${isOnline ? "bg-green-500" : "bg-destructive animate-ping"} opacity-75`}
           ></span>
           <span
             className={`relative inline-flex size-3 rounded-full ${isOnline ? "bg-green-500" : "bg-destructive"}`}

@@ -1,4 +1,4 @@
-import { StatusResponse } from "@/types/status";
+import { StatusResponse } from "@/domain/common/status";
 import { ApiResponse, ApiRoute, hubApiClient } from "./api";
 import { ApiError } from "./api-error";
 

@@ -1,12 +1,13 @@
 "use client";
+import { BaseDevice } from "@/domain/device/base-device";
 import { ColumnDef } from "@tanstack/react-table";
-import { BaseDevice, EntryDevice } from "@/types/device";
 
 export const deviceNameCol = <T extends BaseDevice>(): ColumnDef<T> => ({
-  accessorKey: "name",
+  id: "name",
   header: "Device Name",
-  cell: ({ row }) => {
-    const name = row.getValue("name") as string | undefined;
+  accessorFn: (device) => device.data.name,
+  cell: ({ getValue }) => {
+    const name = getValue<string | undefined>();
     return <div>{name ?? "—"}</div>;
   },
 });

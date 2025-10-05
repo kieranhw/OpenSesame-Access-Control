@@ -1,5 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox";
-import { BaseDevice } from "@/types/device";
+import { BaseDevice } from "@/domain/common/device";
 import { ColumnDef } from "@tanstack/react-table";
 
 export const selectColumn = <T extends BaseDevice>(): ColumnDef<T> => ({

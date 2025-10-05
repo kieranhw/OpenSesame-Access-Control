@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import api from "@/lib/api/api";
-import { LoadState } from "@/types/load-state";
+import { LoadState } from "@/domain/common/load-state";
 import { ConfigPatch, ConfigResponse } from "@/lib/api/config";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 

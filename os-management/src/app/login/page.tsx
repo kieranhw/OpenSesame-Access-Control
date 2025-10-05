@@ -5,7 +5,7 @@ import { LoginForm } from "@/components/login-form";
 import packageJson from "../../../package.json";
 import { AppRoute } from "@/lib/app-routes";
 import api from "@/lib/api/api";
-import { LoadState } from "@/types/load-state";
+import { LoadState } from "@/domain/common/load-state";
 
 export default function LoginPage() {
   const router = useRouter();

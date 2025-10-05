@@ -6,7 +6,7 @@ import { config } from "./config";
 import { status } from "./status";
 import { ApiError } from "./api-error";
 
-export type ApiResponse<T> = { data: T; error?: never } | { data?: never; error: ApiError };
+export type ApiResponse<T = unknown> = { data?: T; error?: never } | { data?: never; error: ApiError };
 
 export const HUB_BASE_URI = "http://localhost:11072";
 

@@ -1,6 +1,6 @@
 "use client";
+import { BaseDevice } from "@/domain/device/base-device";
 import { ColumnDef } from "@tanstack/react-table";
-import { BaseDevice } from "@/types/device";
 
 export const updatedAtCol = <T extends BaseDevice>(): ColumnDef<T> => ({
   accessorKey: "updatedAt",
@@ -12,7 +12,7 @@ export const updatedAtCol = <T extends BaseDevice>(): ColumnDef<T> => ({
       day: "2-digit",
       month: "2-digit",
       year: "2-digit",
-    }); 
+    });
     return <div>{formattedDate}</div>;
   },
 });
